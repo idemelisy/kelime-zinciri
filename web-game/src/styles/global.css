@@ -1,0 +1,19 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Noto Sans', 'Segoe UI', 'Arial', sans-serif;
+  color: #17211b;
+  background: #efebe2;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input {
+  font: inherit;
+}

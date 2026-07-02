@@ -1,0 +1,1 @@
+{"root":["./src/main.tsx","./src/app/app.tsx","./src/domain/game/motor.ts","./src/domain/game/puzzle.ts","./src/infrastructure/dictionary/loaddictionary.ts"],"version":"5.9.3"}
