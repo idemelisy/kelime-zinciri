@@ -5,7 +5,6 @@ from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Eğer modüllerin kendi dosya sistemindeyse bunlar kalmalı
 from game import Puzzle, generate_puzzle, normalize
 from motor import Motor
 
@@ -32,7 +31,6 @@ def initialize_state() -> None:
         st.session_state.game_over = False
         st.session_state.time_expired = False
         st.session_state.error_msg = ""
-        # Başlangıçta 7 saniye + 1 saniye (okuma/hazırlık toleransı) veriyoruz
         st.session_state.deadline = time.time() + 8.0 
         st.session_state.show_plus_7 = False
 
@@ -50,7 +48,7 @@ def reset_game() -> None:
 # --- Sayfa Ayarları (Kompakt Mod) ---
 st.set_page_config(page_title="Kelime Zinciri", page_icon="⏱️", layout="centered")
 
-# --- Ekranı Küçülten ve Odağı Koruyan CSS ---
+# --- CSS Ayarları ---
 st.markdown("""
     <style>
         .block-container {
@@ -58,52 +56,18 @@ st.markdown("""
             padding-bottom: 0rem !important;
             max-width: 550px !important;
         }
-        h1 {
-            font-size: 1.8rem !important;
-            margin-bottom: 0.2rem !important;
-            padding-bottom: 0rem !important;
-        }
-        h3 {
-            font-size: 1.1rem !important;
-            margin-top: 0.5rem !important;
-            margin-bottom: 0.3rem !important;
-        }
+        h1 { font-size: 1.8rem !important; margin-bottom: 0.2rem !important; padding-bottom: 0rem !important; }
+        h3 { font-size: 1.1rem !important; margin-top: 0.5rem !important; margin-bottom: 0.3rem !important; }
         .wordle-tile {
-            display: inline-block;
-            background-color: #f0f2f5;
-            border: 2px solid #d3d6da;
-            color: #1a1a1a;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 1rem;
-            padding: 4px 10px;
-            margin: 2px;
-            text-align: center;
-            letter-spacing: 0.5px;
+            display: inline-block; background-color: #f0f2f5; border: 2px solid #d3d6da;
+            color: #1a1a1a; border-radius: 4px; font-weight: bold; font-size: 1rem;
+            padding: 4px 10px; margin: 2px; text-align: center; letter-spacing: 0.5px;
         }
-        .wordle-tile-start {
-            background-color: #4caf50;
-            color: white;
-            border-color: #4caf50;
-        }
-        .wordle-tile-target {
-            background-color: #2196f3;
-            color: white;
-            border-color: #2196f3;
-        }
-        .chain-arrow {
-            color: #888;
-            font-weight: bold;
-            font-size: 1rem;
-            margin: 0 2px;
-        }
-        hr {
-            margin: 0.6rem 0 !important;
-        }
-        .stTextInput label {
-            font-size: 0.9rem !important;
-            padding-bottom: 0.2rem !important;
-        }
+        .wordle-tile-start { background-color: #4caf50; color: white; border-color: #4caf50; }
+        .wordle-tile-target { background-color: #2196f3; color: white; border-color: #2196f3; }
+        .chain-arrow { color: #888; font-weight: bold; font-size: 1rem; margin: 0 2px; }
+        hr { margin: 0.6rem 0 !important; }
+        .stTextInput label { font-size: 0.9rem !important; padding-bottom: 0.2rem !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -114,7 +78,6 @@ entered_words = st.session_state.entered_words
 motor = st.session_state.motor
 
 # --- +7 SANİYE GÖRSEL ANİMASYONU ---
-# Eğer doğru kelime girildiyse, sayfa yenilendiğinde bu CSS animasyonu tetiklenir
 if st.session_state.get("show_plus_7", False):
     st.markdown(
         """
@@ -133,7 +96,6 @@ if st.session_state.get("show_plus_7", False):
         </style>
         """, unsafe_allow_html=True
     )
-    # Animasyon sadece 1 kere çalışmalı
     st.session_state.show_plus_7 = False
 
 # --- BAŞLIK ---
@@ -162,26 +124,26 @@ st.write("---")
 # --- OYUN DURUM KONTROLÜ (KAZANMA / KAYBETME / OYNAMA) ---
 if st.session_state.game_over:
     st.balloons()
-    st.success(f"🎉 Harika! {len(entered_words)} kelimede hedefe ulaştın ve zamanı yendin.")
-    if st.button("Yeni Oyuna Başla 🔄", type="primary", use_container_width=True):
+    user_connected_count = len(entered_words) - 1
+    st.success(f"🎉 Harika! {user_connected_count} kelime bağlayarak hedefe ulaştın ve zamanı yendin.")
+    if st.button("Yeniden Oyna 🔄", type="primary", use_container_width=True, key="btn_win_reset"):
         reset_game()
 
 elif st.session_state.time_expired:
     st.error("⏳ SÜRE BİTTİ! Yeterince hızlı olamadın.")
-    st.info(f"Zincir koptu... Ama fena değil, {len(entered_words)} kelime bağladın!")
-    if st.button("Tekrar Dene 🔄", type="primary", use_container_width=True):
+    user_connected_count = len(entered_words) - 1
+    st.info(f"Zincir koptu... ")
+    if st.button("Yeniden Oyna 🔄", type="primary", use_container_width=True, key="btn_lose_reset"):
         reset_game()
 
 else:
     # --- GERİ SAYIM KONTROLÜ VE GÖRSEL BAR (JS) ---
     time_left = st.session_state.deadline - time.time()
     
-    # Sunucu tarafında süre kontrolü (Kullanıcı sekmede beklediyse diye)
     if time_left <= 0:
         st.session_state.time_expired = True
         st.rerun()
         
-    # Akıcı HTML/JS Geri Sayım Barı
     components.html(
         f"""
         <div id="timer-container" style="background-color: #e0e0e0; border-radius: 6px; width: 100%; height: 26px; position: relative; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);">
@@ -192,7 +154,6 @@ else:
         </div>
         <script>
             var timeLeft = {time_left};
-            // Çubuğun doluluk oranını hesaplamak için dinamik max zaman ayarlıyoruz
             var maxTime = Math.max(timeLeft, 7.0); 
             var startTime = performance.now();
             var timerBar = document.getElementById("timer-bar");
@@ -211,19 +172,26 @@ else:
                     timerText.style.color = "white";
                     timerText.style.textShadow = "none";
                     
-                    // JS tarafında inputları anında kilitle!
                     var parentDoc = window.parent.document;
-                    var inputs = parentDoc.querySelectorAll('input');
-                    inputs.forEach(inp => inp.disabled = true);
-                    var buttons = parentDoc.querySelectorAll('button');
-                    buttons.forEach(btn => btn.disabled = true);
+                    var submitBtn = parentDoc.querySelector('button[data-testid="stFormSubmitButton"]');
+                    
+                    if (!submitBtn) {{
+                        var buttons = parentDoc.querySelectorAll('button');
+                        buttons.forEach(function(btn) {{
+                            if (btn.textContent && btn.textContent.includes("Kelimeyi Ekle")) {{
+                                submitBtn = btn;
+                            }}
+                        }});
+                    }}
+                    
+                    if (submitBtn) {{
+                        submitBtn.click();
+                    }}
                 }} else {{
-                    // Bar genişliğini ve metni güncelle
                     var pct = (currentLeft / maxTime) * 100;
                     timerBar.style.width = Math.min(pct, 100) + "%";
                     timerText.innerText = currentLeft.toFixed(1) + "s";
                     
-                    // Azalan süre renk uyarıları (Turuncu ve Kırmızı)
                     if (currentLeft <= 3.5) {{
                         timerBar.style.backgroundColor = "#ff9800";
                     }}
@@ -235,7 +203,6 @@ else:
                 }}
             }}, 50);
 
-            // Eski kodundaki Focus logic'i de buraya gömdük, performans artışı sağlar
             function setFocus() {{
                 var parentDoc = window.parent.document;
                 var input = parentDoc.querySelector('input[placeholder="Yazın ve Enter\\'a basın..."]');
@@ -262,19 +229,16 @@ else:
         submit_btn = st.form_submit_button("Kelimeyi Ekle", use_container_width=True)
 
     # --- KELİME GİRİŞİ YAKALAMA VE SÜRE KONTROLÜ ---
-    if submit_btn and current_input:
-        # 1. Aşama: Kullanıcı kelimeyi gönderdiğinde süre çoktan bitmiş mi?
+    if submit_btn or current_input:
         if time.time() > st.session_state.deadline:
             st.session_state.time_expired = True
             st.rerun()
             
-        next_word = normalize(current_input)
+        next_word = normalize(current_input) if current_input else ""
         previous_word = entered_words[-1]
         
-        # 2. Aşama: Kurallar
         if not next_word:
-            st.session_state.error_msg = "Lütfen geçerli bir kelime girin."
-            st.rerun()
+            pass 
         elif not motor.contains(next_word):
             st.session_state.error_msg = f"'{display_word(next_word)}' sözlükte bulunamadı!"
             st.rerun()
@@ -285,16 +249,13 @@ else:
             st.session_state.error_msg = f"Kelime '{display_word(previous_word[-1])}' harfiyle başlamalı!"
             st.rerun()
         else:
-            # GEÇERLİ KELİME GİRİLDİ
             st.session_state.entered_words.append(next_word)
             st.session_state.error_msg = "" 
             
             if next_word[-1] == normalize(puzzle.target)[0]:
                 st.session_state.game_over = True
             else:
-                # OYUN DEVAM EDİYOR -> +7 Saniye Ekle!
                 st.session_state.deadline += 7.0
-                st.session_state.show_plus_7 = True # Animasyonu tetikle
+                st.session_state.show_plus_7 = True 
             
             st.rerun()
-
