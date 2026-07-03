@@ -4,14 +4,21 @@ from pathlib import Path
 
 
 class Motor:
-	def __init__(self, folder: str | Path) -> None:
+	def __init__(self, folder: str | Path, dar_folder: str |Path ) -> None:
 		self.folder = Path(folder)
+		self.dar_folder = Path(dar_folder)
 		self._words_by_letter: dict[str, list[str]] = {}
 		self._word_set: set[str] = set()
 		self._load_dictionary()
-
+		self._dar_words: list[str]=[]
+		self._load_dar_dictionary()
+	# motor.py içindeki sınıf metodu
 	def _normalize(self, word: str) -> str:
-		return word.strip().lower()
+		if not word:
+			return ""
+		_TURKISH_LOWER_MAP = str.maketrans({"I": "ı", "İ": "i", "Ş": "ş", "Ç": "ç", "Ğ": "ğ", "Ü": "ü", "Ö": "ö"})
+		return word.strip().translate(_TURKISH_LOWER_MAP).lower()
+
 
 	def _load_dictionary(self) -> None:
 		for file_path in sorted(self.folder.glob("*.list")):
@@ -26,15 +33,22 @@ class Motor:
 				self._word_set.add(self._normalize(clean_word))
 
 			self._words_by_letter[letter] = words
+	def _load_dar_dictionary(self) -> None:
+		for file_path in sorted(self.dar_folder.glob("*.list")):
+			for line in file_path.read_text(encoding="utf-8").splitlines():
+				clean_word = line.strip()
+				if not clean_word:
+					continue
+				if self.contains(clean_word):
+					self._dar_words.append(clean_word)
+				
+
 
 	def contains(self, word: str) -> bool:
 		return self._normalize(word) in self._word_set
 
 	def all_words(self) -> list[str]:
-		words: list[str] = []
-		for word_list in self._words_by_letter.values():
-			words.extend(word_list)
-		return words
+		return self._dar_words
 
 	def neighbors(self, word: str) -> list[str]:
 		normalized = self._normalize(word)

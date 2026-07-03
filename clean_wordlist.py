@@ -4,15 +4,17 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 
-SUFFIXES = ("ist","ma", "me", "mak", "mek","lik","lık","luk","lük","izm","cı","cu","ci","ce","ca","çı","çi","çu","iş","ış","cesine","casına","çesine","çasına","lı","li","sız","siz","suz","süz","lu","lü","esi","ası")
+SUFFIXES = ()#"ist","ma", "me", "mak", "mek","lik","lık","luk","lük","izm","cı","cu","ci","ce","ca","çı","çi","çu","iş","ış","cesine","casına","çesine","çasına","lı","li","sız","siz","suz","süz","lu","lü","esi","ası"
 
 
 def should_remove(word: str) -> bool:
 	stripped = word.strip()
+	if not word:
+		return True
 	if not stripped:
 		return False
-	if stripped[0].isupper():
-		return True
+	# if stripped[0].isupper():
+	# 	return True
 	normalized = stripped.lower()
 	if not normalized:
 		return False
@@ -25,7 +27,8 @@ def should_remove(word: str) -> bool:
 
 def filter_file(file_path: Path, apply_changes: bool) -> tuple[int, int]:
 	original_lines = file_path.read_text(encoding="utf-8").splitlines()
-	kept_lines = [line for line in original_lines if not should_remove(line)]
+	transformed_lines = [line.strip().lower() for line in original_lines]
+	kept_lines = [line for line in transformed_lines if not should_remove(line)]
 
 	removed_count = len(original_lines) - len(kept_lines)
 	if apply_changes and removed_count > 0:

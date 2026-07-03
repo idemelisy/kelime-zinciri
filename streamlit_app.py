@@ -1,3 +1,4 @@
+# streamlit run streamlit_app.py
 from __future__ import annotations
 
 import time
@@ -8,14 +9,18 @@ import streamlit.components.v1 as components
 from game import Puzzle, generate_puzzle, normalize
 from motor import Motor
 
+# --- Klasör Yolları Tanımlamaları ---
 DEFAULT_FOLDER = Path(__file__).parent / "Turkce-Kelime-Listesi"
+DEFAULT_DAR_FOLDER = Path(__file__).parent / "dar_list"  # Yeni dar klasör yolu
+
 _TURKISH_UPPER_MAP = str.maketrans({
     "i": "İ", "ı": "I", "ş": "Ş", "ç": "Ç", "ğ": "Ğ", "ü": "Ü", "ö": "Ö"
 })
 
 @st.cache_resource
 def load_motor() -> Motor:
-    return Motor(DEFAULT_FOLDER)
+    # ARTIK İKİ PARAMETRE ALIYOR: Geniş sözlük ve dar sözlük
+    return Motor(DEFAULT_FOLDER, DEFAULT_DAR_FOLDER)
 
 def display_word(word: str) -> str:
     return word.translate(_TURKISH_UPPER_MAP).upper()
@@ -239,7 +244,7 @@ else:
         
         if not next_word:
             pass 
-        elif not motor.contains(next_word):
+        elif not motor.contains(next_word): # Kontrol hala geniş listeden yapılıyor
             st.session_state.error_msg = f"'{display_word(next_word)}' sözlükte bulunamadı!"
             st.rerun()
         elif next_word in entered_words:

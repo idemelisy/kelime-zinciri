@@ -1,0 +1,172 @@
+GUNCEL DURUM RAPORU - KELIME ZINCIRI OYUNU
+
+Tarih: 2026-07-03
+Durum: Aktif geliştirme asamasinda, iki arayuzlu MVP
+
+1. Projenin Amaci
+
+Bu proje, Wordle benzeri sade bir deneyim sunan ama mekanigi farkli olan bir kelime zinciri oyunudur. Oyuncu bir baslangic kelimesi ve bir hedef kelime gorur. Girilen her yeni kelime, onceki kelimenin son harfi ile baslamali ve kelime sozlukte bulunmali, daha once kullanilmamis olmali ve hedefe ulasildiginda oyun tamamlanmali.
+
+2. Genel Mimari
+
+Proje iki ayri fakat ayni oyun mantigini kullanan arayuzdan olusur:
+
+- React + Vite arayuzu: tarayici icin hizli ve modern SPA.
+- Streamlit arayuzu: Python tabanli alternatif arayuz.
+
+Iki arayuz de ayni cekirdek oyun fikrine baglidir ama sunum katmani farklidir. Bu sayede kullanici testleri icin hem web tabanli UI hem de Python tabanli UI elde edilmistir.
+
+3. Teknik Mimari Katmanlari
+
+3.1 Python cekirdek katmani
+
+Python tarafinda ana mantik su dosyalarda toplanir:
+
+- motor.py: sozluk yukleme, kelime normalizasyonu, contains, neighbors ve zincir dogrulama.
+- game.py: puzzle uretimi ve rastgele gecerl zincir olusturma.
+
+Motor sinifi sozluk klasorundeki .list dosyalarini okuyarak kelimeleri hafizada tutar. Kelimelerin ilk ve son harflerine gore komsuluk kurar. Bu sayede hem manuel oyun akisi hem de puzzle uretimi ayni veri yapisi uzerinden calisir.
+
+3.2 React tarafi
+
+React uygulamasi web-game klasorundedir. Temel akış:
+
+- src/infrastructure/dictionary/loadDictionary.ts: public/dictionary.json dosyasini fetch ederek kelime listesini yukler.
+- src/domain/game/motor.ts: frontend icin hafif Motor uygulamasi.
+- src/domain/game/puzzle.ts: start, word1, word2, word3, target seklinde gecerli path uretir.
+- src/app/App.tsx: UI, state, validasyon ve oyun sonu davranisini yonetir.
+- src/app/App.css: gorunum, kart yapisi, responsive düzen ve renkler.
+
+React tarafi sunlari yapiyor:
+
+- sozluk yuklenince puzzle olusturuyor,
+- girilen kelimeyi kucuk harf olarak state'te tutuyor,
+- ekranda Turkce buyuk harf olarak gosteriyor,
+- hata ve basari mesajlarini ayri alanda veriyor,
+- oyun bittiğinde formu gizliyor.
+
+3.3 Streamlit tarafi
+
+Streamlit uygulamasi streamlit_app.py dosyasindadir. Bu arayuz, React ekranina olabildigince benzer bir gorunum ve akis saglar.
+
+Streamlit tarafinin ozelikleri:
+
+- Motor ve puzzle uretimi Python motorundan geliyor.
+- session_state ile oyun durumu korunuyor.
+- cache_resource ile Motor bir kez yukleniyor.
+- Baslangic ve hedef kelime kartlari, girilen kelimeler listesi, form ve mesaj alani React ile benzer sekilde gösteriliyor.
+- Turkce buyuk harf gosterimi ozellestirilmis display_word fonksiyonu ile yapiliyor.
+
+4. Oyun Motorunun Teknik Ozellikleri
+
+Motor sinifi asagidaki fonksiyonlari saglar:
+
+- normalize(word): kelimeyi trim eder ve kucuk harfe cevirir.
+- contains(word): kelimenin sozlukte olup olmadigini kontrol eder.
+- neighbors(word): son harfe gore sonraki aday kelimeleri getirir.
+- all_words(): tum kelimeleri dondurur.
+- validate_chain(chain): kelime zincirinin kurallara uygun olup olmadigini kontrol eder.
+
+Bu yapi sayesinde oyun kurallari UI'dan bagimsizdir. UI sadece kullanicidan veri alir ve sonucu gosterir.
+
+5. Puzzle Uretim Mantigi
+
+Puzzle uretici su mantikla calisir:
+
+- sozlukten rastgele bir baslangic kelimesi secilir,
+- bu kelimeden komsu kelimeler bulunur,
+- zincir uzerinde tekrar eden kelime olmamasina dikkat edilir,
+- start -> word1 -> word2 -> word3 -> target seklinde gecerli bir yol bulununca puzzle kabul edilir,
+- uretim sirasinda bu yol debug amaciyla solution olarak saklanir.
+
+Bu mekanik, kullanici testleri icin yeterince sade ama oynanabilir bir deneyim verir.
+
+6. Validasyon Kurallari
+
+Oyunda uygulanan temel kurallar:
+
+- Kelime sozlukte olmali.
+- Kelime daha once kullanilmamis olmali.
+- Kelime onceki kelimenin son harfiyle baslamali.
+- Hedefe ulasmak icin mevcut kelimenin son harfi, hedef kelimenin ilk harfi ile ayni olmalidir.
+
+React ve Streamlit tarafinda bu kurallar ayni cekirdek mantiga dayanir. Bu sayede iki arayuz arasinda is kurali farki olusmaz.
+
+7. Fiziksel / UI Ozellikleri
+
+7.1 React arayuzu
+
+React ekraninin gorunur ozellikleri:
+
+- merkeze alinmis kart yapisi,
+- Wordle benzeri minimal yerlesim,
+- baslik ve aciklama alanı,
+- baslangic ve hedef kelime kartlari,
+- girilen kelimeler listesi,
+- tek input alanı,
+- tek submit butonu,
+- validasyon mesaj alani,
+- oyun sonu durumunda formun gizlenmesi.
+
+Tasarim dili sade, yumuşak ve mobil uyumlu olacak sekilde kurulmuştur. Turkish uppercase gosterimi icin locale-aware cevirim kullanilir.
+
+7.2 Streamlit arayuzu
+
+Streamlit ekraninda da benzer fiziksel ozellikler korunur:
+
+- merkezi ve dar kart yapisi,
+- ustte oyun basligi,
+- yan yana baslangic/hedef kutulari,
+- zincir listesi,
+- tek input ve tek submit butonu,
+- hata ve basari mesajlari,
+- oyun bittiğinde yeniden oynama davranisi.
+
+Streamlit tarafinda mevcut durum biraz daha deneysel ve Python UI denemesi niteligindedir. Ancak genel oyun akisi React ile ayni kurallari izler.
+
+8. Veri Kaynagi ve Sozluk Yapisi
+
+Sozluk verisi iki farkli sekilde kullaniliyor:
+
+- Python tarafinda Turkce-Kelime-Listesi klasoru altindaki .list dosyalari dogrudan okunuyor.
+- React tarafinda ayni kaynaklardan uretilen public/dictionary.json dosyasi kullaniliyor.
+
+Bu ayrim, browser ortaminda dogrudan dosya sistemine erisim olmadigi icin gereklidir. Veri once JSON olarak uretilir, sonra frontend tarafinda fetch edilir.
+
+9. Mevcut Durum Ozeti
+
+Simdiki durumda proje calisabilir durumdadir.
+
+- React UI build alabiliyor ve calisiyor.
+- Streamlit UI mevcut ve Python motorunu kullaniyor.
+- Turkce buyuk harf gosterimi duzeltildi.
+- Form oyun bittiginde gizleniyor.
+- Kelimeler state icinde kucuk harf olarak tutuluyor.
+- Gosterim katmaninda Turkce uyumlu buyuk harf kullaniliyor.
+
+10. Teknik Notlar ve Sinirlar
+
+- React ve Streamlit arayuzleri birebir ayni kodu paylasmiyor, ama ayni oyun kurallarina bagli.
+- React tarafi frontend odakli oldugu icin sozluk verisi onceden JSON'a cevriliyor.
+- Streamlit tarafinda zaman tabanli eski deneme kodlari ile sade MVP ayni dosyada bir noktada karismis olabilir; bu nedenle dosya sonraki asamada sadeleştirilebilir.
+- Oyun su anda user testing odakli MVP seviyesindedir; ekstra mimari katmanlar, context, Redux, backend veya karmaşık state management bilincli olarak eklenmemistir.
+
+11. Sonraki Olası Adimlar
+
+- React ve Streamlit icin ortak oyun kurallarini tek bir Python cekirdekte daha da netlestirmek.
+- Streamlit dosyasini tamamen React ekranina benzer hale gelecek sekilde sadeleştirmek.
+- GitHub private repo olusturup iki arayuzu ayni repoda surdurmek.
+- Deploy asamalarini ayri ayri hazirlamak: React icin Vercel/Netlify, Streamlit icin Streamlit Community Cloud.
+
+Kisa sonuc:
+Bu proje su anda iki yuzlu bir MVP mimarisine sahiptir. Oyun motoru cekirdekte, UI katmanlari ise React ve Streamlit olarak ayrilmistir. Teknik olarak sade, kolay okunur ve ileride refactor etmeye uygun bir yapida tutulmustur.
+
+
+Muhtemel yenilikler:
+1-Animasyon ekleme
+2-Günün bulmacası Ör:e harfini kullanma, senin eklediğin keliemeye random başka kelime de eklenir
+3-Leaderboard
+4-İki farklı sözlük: 1'i kelime var mı diye kontrol etmek için 2. si kelime zinciri yapılacak kelimeelri seçmek için. Bu zincir daha yaygın kelimeelrden oluşur.
+5- Input almama / I-İ ile ilgili olabilir sorunu var
+ 6- Streamlit kasıyor delayler oluyor.
+ 7- Sözlük keliemelrinin düzeltilemesi. TDK sözlüğü scrapelenerek oluşturuldu. Bu sözlükte isim olmayan (fiil,zarf vb) ya da çekim ekleri/yapım ekleri almış isimler var(vakitli gibi) bunların düzeltilmesi vakitli yerine vakit kelimesi yazılamsı lazım.
