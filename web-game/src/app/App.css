@@ -408,3 +408,16 @@ transition:.2s;
 background:var(--primary-hover);
 
 }
+.timer{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-size:2rem;
+    font-weight:700;
+
+    color:var(--primary);
+
+    margin-top:-10px;
+    margin-bottom:8px;
+}

@@ -24,6 +24,8 @@ export default function App() {
   const [gameOver, setGameOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [showHelp, setShowHelp] = useState(true);
+  const TURN_TIME = 7;
+const [timeLeft, setTimeLeft] = useState(TURN_TIME);
   function createNewPuzzle(gameMotor: Motor) {
 
     const nextPuzzle = generatePuzzle(gameMotor);
@@ -46,7 +48,7 @@ export default function App() {
     setSuccessMessage("");
 
     setGameOver(false);
-
+    setTimeLeft(TURN_TIME);
     console.debug(nextPuzzle.solution);
 }
   useEffect(() => {
@@ -67,8 +69,29 @@ export default function App() {
       active = false;
     };
   }, []);
+useEffect(() => {
+    if (gameOver || !puzzle) return;
 
+    const timer = setInterval(() => {
+        setTimeLeft((prev) => {
+            if (prev <= 1) {
+                clearInterval(timer);
+                setGameOver(true);
+                setSuccessMessage("");
+                setValidationMessages(["⏰ Süre doldu!"]);
+                return 0;
+            }
+
+            return prev - 1;
+        });
+    }, 1000);
+
+    return () => clearInterval(timer);
+
+}, [gameOver, puzzle]);
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
+   
+
     event.preventDefault();
 
     if (!motor || !puzzle) {
@@ -105,6 +128,7 @@ export default function App() {
     inputRef.current?.focus();
     const updatedWords = [...enteredWords, nextWord];
     setEnteredWords(updatedWords);
+    setTimeLeft(TURN_TIME);
     setCurrentWord('');
     setValidationMessages([]);
 
@@ -142,6 +166,9 @@ target={displayWord(puzzle.target)}
 />
 
 )}
+<div className="timer">
+    ⏱ {timeLeft}
+</div>
 <WordChain
     words={enteredWords.map(displayWord)}
 />
