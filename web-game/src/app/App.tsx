@@ -4,6 +4,7 @@ import GoalBar from "../components/GoalBar";
 import WordChain from "../components/WordChain";
 import MessageBox from "../components/MessageBox";
 import HowToPlay from "../components/HowToPlay";
+import CircularTimer from "../components/CircularTimer";
 import "./App.css";  
  import "../styles/variables.css";
 import { Motor } from '../domain/game/motor';
@@ -174,9 +175,10 @@ target={displayWord(puzzle.target)}
 />
 
 )}
-<div className="timer">
-    ⏱ {timeLeft}
-</div>
+<CircularTimer
+    timeLeft={timeLeft}
+    totalTime={TURN_TIME}
+/>
 <WordChain
     words={enteredWords.map(displayWord)}
 />
