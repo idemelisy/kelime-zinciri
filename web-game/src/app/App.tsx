@@ -3,6 +3,7 @@ import Header from "../components/Header";
 import GoalBar from "../components/GoalBar";
 import WordChain from "../components/WordChain";
 import MessageBox from "../components/MessageBox";
+import HowToPlay from "../components/HowToPlay";
 import "./App.css";  
  import "../styles/variables.css";
 import { Motor } from '../domain/game/motor';
@@ -22,30 +23,46 @@ export default function App() {
   const [successMessage, setSuccessMessage] = useState('');
   const [gameOver, setGameOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [showHelp, setShowHelp] = useState(true);
+  function createNewPuzzle(gameMotor: Motor) {
+
+    const nextPuzzle = generatePuzzle(gameMotor);
+
+    setPuzzle({
+        ...nextPuzzle,
+        start: Motor.normalize(nextPuzzle.start),
+        target: Motor.normalize(nextPuzzle.target),
+        solution: nextPuzzle.solution.map(Motor.normalize),
+    });
+
+    setEnteredWords([
+        Motor.normalize(nextPuzzle.start),
+    ]);
+
+    setCurrentWord("");
+
+    setValidationMessages([]);
+
+    setSuccessMessage("");
+
+    setGameOver(false);
+
+    console.debug(nextPuzzle.solution);
+}
   useEffect(() => {
     let active = true;
 
     loadDictionary().then((words) => {
-      if (!active) {
-        return;
-      }
+  if (!active) {
+    return;
+  }
 
-      const motor = new Motor(words);
-      const nextPuzzle = generatePuzzle(motor);
-      setMotor(motor);
-      setPuzzle({
-        ...nextPuzzle,
-        start: Motor.normalize(nextPuzzle.start),
-        target: Motor.normalize(nextPuzzle.target),
-        solution: nextPuzzle.solution.map((word) => Motor.normalize(word)),
-      });
-      setEnteredWords([Motor.normalize(nextPuzzle.start)]);
-      setValidationMessages([]);
-      setSuccessMessage('');
-      setGameOver(false);
-      console.debug('Puzzle solution', nextPuzzle.solution);
-    });
+  const gameMotor = new Motor(words);
 
+  setMotor(gameMotor);
+
+  createNewPuzzle(gameMotor);
+});
     return () => {
       active = false;
     };
@@ -107,9 +124,12 @@ export default function App() {
 
 title="Kelime Zinciri"
 
-subtitle="Önceki kelimenin son harfiyle başlayan kelimeleri üret."
+subtitle="Önceki kelimenin son harfiyle başlayan kelimeleri üret."    />
+{showHelp && (
+    <HowToPlay
+        onClose={() => setShowHelp(false)}/>
+)}
 
-/>
 
         {puzzle && (
 
@@ -132,6 +152,8 @@ target={displayWord(puzzle.target)}
               Enter next word
             </label>
             <input
+              ref={inputRef}
+              autoFocus
               id="word-input"
               name="word-input"
               type="text"
@@ -144,7 +166,24 @@ target={displayWord(puzzle.target)}
                 Gönder
             </button>
           </form>
-        ) : null}
+) : (
+
+motor && (
+
+<button
+className="new-game-btn"
+onClick={() => createNewPuzzle(motor)}
+>
+
+Yeni Oyun
+
+</button>
+
+)
+
+)}
+
+        
 
        <MessageBox
     success={successMessage}
