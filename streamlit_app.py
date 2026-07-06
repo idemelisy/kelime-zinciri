@@ -19,7 +19,7 @@ _TURKISH_UPPER_MAP = str.maketrans({
 
 @st.cache_resource
 def load_motor() -> Motor:
-    # ARTIK İKİ PARAMETRE ALIYOR: Geniş sözlük ve dar sözlük
+    # Geniş sözlük ve dar sözlük yükleniyor
     return Motor(DEFAULT_FOLDER, DEFAULT_DAR_FOLDER)
 
 def display_word(word: str) -> str:
@@ -38,6 +38,8 @@ def initialize_state() -> None:
         st.session_state.error_msg = ""
         st.session_state.deadline = time.time() + 8.0 
         st.session_state.show_plus_7 = False
+    if "shake_counter" not in st.session_state:
+        st.session_state.shake_counter = 0
 
 def reset_game() -> None:
     puzzle = generate_puzzle(st.session_state.motor)
@@ -48,6 +50,7 @@ def reset_game() -> None:
     st.session_state.error_msg = ""
     st.session_state.deadline = time.time() + 8.0
     st.session_state.show_plus_7 = False
+    st.session_state.shake_counter = 0
     st.rerun()
 
 # --- Sayfa Ayarları (Kompakt Mod) ---
@@ -73,6 +76,20 @@ st.markdown("""
         .chain-arrow { color: #888; font-weight: bold; font-size: 1rem; margin: 0 2px; }
         hr { margin: 0.6rem 0 !important; }
         .stTextInput label { font-size: 0.9rem !important; padding-bottom: 0.2rem !important; }
+        
+        /* TİTREME (SHAKE) ANİMASYONU */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+
+        /* Streamlit text-input alanını hedefleyen dinamik sınıflar */
+        .shake-active div[data-testid="stTextInput"] {
+            animation: shake 0.5s ease-in-out;
+            border: 1px solid #f44336 !important;
+            border-radius: 4px;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -225,6 +242,10 @@ else:
     if st.session_state.error_msg:
         st.error(st.session_state.error_msg)
         
+    # --- Form Alanı (Tek Bir `key="game_form"` olarak Birleştirildi) ---
+    shake_class = "shake-active" if st.session_state.error_msg else ""
+    st.markdown(f'<div class="{shake_class}">', unsafe_allow_html=True)
+    
     with st.form(key="game_form", clear_on_submit=True):
         current_input = st.text_input(
             label=f"Sıradaki kelime '{display_word(entered_words[-1][-1])}' harfiyle başlamalı:",
@@ -232,6 +253,8 @@ else:
             max_chars=20
         )
         submit_btn = st.form_submit_button("Kelimeyi Ekle", use_container_width=True)
+        
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # --- KELİME GİRİŞİ YAKALAMA VE SÜRE KONTROLÜ ---
     if submit_btn or current_input:
@@ -244,14 +267,17 @@ else:
         
         if not next_word:
             pass 
-        elif not motor.contains(next_word): # Kontrol hala geniş listeden yapılıyor
+        elif not motor.contains(next_word): 
             st.session_state.error_msg = f"'{display_word(next_word)}' sözlükte bulunamadı!"
+            st.session_state.shake_counter += 1
             st.rerun()
         elif next_word in entered_words:
             st.session_state.error_msg = f"'{display_word(next_word)}' kelimesini zaten kullandınız."
+            st.session_state.shake_counter += 1
             st.rerun()
         elif next_word[0] != previous_word[-1]:
             st.session_state.error_msg = f"Kelime '{display_word(previous_word[-1])}' harfiyle başlamalı!"
+            st.session_state.shake_counter += 1
             st.rerun()
         else:
             st.session_state.entered_words.append(next_word)

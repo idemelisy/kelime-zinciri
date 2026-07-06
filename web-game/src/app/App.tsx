@@ -1,5 +1,10 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import './App.css';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import Header from "../components/Header";
+import GoalBar from "../components/GoalBar";
+import WordChain from "../components/WordChain";
+import MessageBox from "../components/MessageBox";
+import "./App.css";  
+ import "../styles/variables.css";
 import { Motor } from '../domain/game/motor';
 import { generatePuzzle, type Puzzle } from '../domain/game/puzzle';
 import { loadDictionary } from '../infrastructure/dictionary/loadDictionary';
@@ -16,6 +21,7 @@ export default function App() {
   const [validationMessages, setValidationMessages] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState('');
   const [gameOver, setGameOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     let active = true;
 
@@ -75,9 +81,11 @@ export default function App() {
     if (nextMessages.length > 0) {
       setValidationMessages(nextMessages);
       setSuccessMessage('');
+      setCurrentWord('');
+      
       return;
     }
-
+    inputRef.current?.focus();
     const updatedWords = [...enteredWords, nextWord];
     setEnteredWords(updatedWords);
     setCurrentWord('');
@@ -95,32 +103,29 @@ export default function App() {
   return (
     <main className="game-shell">
       <section className="game-card" aria-labelledby="game-title">
-        <header className="game-header">
-          
-          <h1 id="game-title">Kelime Zinciri</h1>
-          <p className="subtitle">Önceki kelimenin son harfiyle başlayan kelimeleri üret ve zinciri tamamla</p>
-        </header>
+       <Header
 
-        <dl className="word-summary" aria-label="Game words">
-          <div>
-            <dt>Başlangıç</dt>
-            <dd>{puzzle ? displayWord(puzzle.start) : 'Loading...'}</dd>
-          </div>
-          <div>
-            <dt>Hedef Kelime</dt>
-            <dd>{puzzle ? displayWord(puzzle.target) : 'Loading...'}</dd>
-          </div>
-        </dl>
+title="Kelime Zinciri"
 
-        <section className="panel" aria-labelledby="entered-words-title">
-         
-          <ul className="word-list" aria-live="polite">
-            {enteredWords.map((word) => (
-              <li key={word}>{displayWord(word)}</li>
-            ))}
-          </ul>
-        </section>
+subtitle="Önceki kelimenin son harfiyle başlayan kelimeleri üret."
 
+/>
+
+        {puzzle && (
+
+<GoalBar
+
+start={displayWord(puzzle.start)}
+
+target={displayWord(puzzle.target)}
+
+/>
+
+)}
+<WordChain
+    words={enteredWords.map(displayWord)}
+/>
+      
         {!gameOver ? (
           <form className="entry-form" onSubmit={handleSubmit}>
             <label className="sr-only" htmlFor="word-input">
@@ -132,7 +137,7 @@ export default function App() {
               type="text"
               placeholder="Kelime girin..."
               autoComplete="off"
-              value={displayWord(currentWord)}
+              value={currentWord}
               onChange={(event) => setCurrentWord(Motor.normalize(event.target.value))}
             />
             <button type="submit" disabled={!puzzle}>
@@ -141,14 +146,10 @@ export default function App() {
           </form>
         ) : null}
 
-        <section className="panel validation-panel">
-          <ul className="message-list" aria-live="polite">
-            {successMessage ? <li className="success-message">{successMessage}</li> : null}
-            {validationMessages.map((message) => (
-              <li key={message}>{message}</li>
-            ))}
-          </ul>
-        </section>
+       <MessageBox
+    success={successMessage}
+    errors={validationMessages}
+/>
       </section>
     </main>
   );
