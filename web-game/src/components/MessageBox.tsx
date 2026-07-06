@@ -1,27 +1,78 @@
-type MessageBoxProps = {
-  success: string;
-  errors: string[];
+import { AnimatePresence, motion } from "framer-motion";
+
+type Props = {
+    success: string;
+    errors: string[];
 };
 
 export default function MessageBox({
-  success,
-  errors,
-}: MessageBoxProps) {
-  return (
-    <section className="panel validation-panel">
+    success,
+    errors,
+}: Props) {
 
-      {success && (
-        <div className="success-box">
-          {success}
-        </div>
-      )}
+    return (
 
-      {errors.map((error) => (
-        <div className="error-box" key={error}>
-          {error}
-        </div>
-      ))}
+        <AnimatePresence mode="wait">
 
-    </section>
-  );
+            {success && (
+
+                <motion.div
+                    key="success"
+                    className="success-box"
+                    initial={{
+                        opacity: 0,
+                        y: -12,
+                        scale: .95
+                    }}
+                    animate={{
+                        opacity: 1,
+                        y: 0,
+                        scale: 1
+                    }}
+                    exit={{
+                        opacity: 0,
+                        y: -10
+                    }}
+                >
+                    ✅ {success}
+                </motion.div>
+
+            )}
+
+            {!success && errors.length > 0 && (
+
+                <motion.div
+                    key="error"
+                    className="error-box"
+                    initial={{
+                        opacity: 0,
+                        y: -12,
+                        scale: .95
+                    }}
+                    animate={{
+                        opacity: 1,
+                        y: 0,
+                        scale: 1
+                    }}
+                    exit={{
+                        opacity: 0
+                    }}
+                >
+
+                    {errors.map(error => (
+
+                        <div key={error}>
+                            ❌ {error}
+                        </div>
+
+                    ))}
+
+                </motion.div>
+
+            )}
+
+        </AnimatePresence>
+
+    );
+
 }

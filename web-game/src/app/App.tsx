@@ -3,8 +3,9 @@ import Header from "../components/Header";
 import GoalBar from "../components/GoalBar";
 import WordChain from "../components/WordChain";
 import MessageBox from "../components/MessageBox";
-import HowToPlay from "../components/HowToPlay";
+import VictoryScreen from "../components/VictoryScreen";
 import CircularTimer from "../components/CircularTimer";
+import LandingPage from "../components/LandingPage";
 import "./App.css";  
  import "../styles/variables.css";
 import { Motor } from '../domain/game/motor';
@@ -24,8 +25,10 @@ export default function App() {
   const [successMessage, setSuccessMessage] = useState('');
   const [gameOver, setGameOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [showHelp, setShowHelp] = useState(true);
+const [startTime, setStartTime] = useState(Date.now());
+const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [shakeInput, setShakeInput] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
   const TURN_TIME = 7;
 const [timeLeft, setTimeLeft] = useState(TURN_TIME);
   function createNewPuzzle(gameMotor: Motor) {
@@ -50,6 +53,8 @@ const [timeLeft, setTimeLeft] = useState(TURN_TIME);
     setSuccessMessage("");
 
     setGameOver(false);
+    setStartTime(Date.now());
+setElapsedSeconds(0);
     setTimeLeft(TURN_TIME);
     console.debug(nextPuzzle.solution);
 }
@@ -141,15 +146,32 @@ useEffect(() => {
     setCurrentWord('');
     setValidationMessages([]);
 
-    if (nextWord[nextWord.length - 1] === puzzle.target[0]) {
-      setGameOver(true);
-      setSuccessMessage('Başarılı! Hedef kelimeye ulaştınız.');
-      return;
-    }
+   if (nextWord[nextWord.length - 1] === puzzle.target[0]) {
+
+    setElapsedSeconds(
+        Math.floor(
+            (Date.now() - startTime) / 1000
+        )
+    );
+
+    setGameOver(true);
+
+    setSuccessMessage("");
+
+    return;
+}
 
     setSuccessMessage('');
   }
-
+ if (!gameStarted) {
+    return (
+      <main className="game-shell">
+        <LandingPage
+          onStart={() => setGameStarted(true)}
+        />
+      </main>
+    );
+  }
   return (
     <main className="game-shell">
       <section className="game-card" aria-labelledby="game-title">
@@ -158,10 +180,7 @@ useEffect(() => {
 title="Kelime Zinciri"
 
 subtitle="Önceki kelimenin son harfiyle başlayan kelimeleri üret."    />
-{showHelp && (
-    <HowToPlay
-        onClose={() => setShowHelp(false)}/>
-)}
+
 
 
         {puzzle && (
@@ -181,53 +200,75 @@ target={displayWord(puzzle.target)}
 />
 <WordChain
     words={enteredWords.map(displayWord)}
+    completed={gameOver}
 />
       
         {!gameOver ? (
-          <form className="entry-form" onSubmit={handleSubmit}>
-            <label className="sr-only" htmlFor="word-input">
-              Enter next word
-            </label>
-            <input
-              ref={inputRef}
-              className={shakeInput ? "shake" : ""}
-              autoFocus
-              id="word-input"
-              name="word-input"
-              type="text"
-              placeholder="Kelime girin..."
-              autoComplete="off"
-              value={currentWord}
-              onChange={(event) => setCurrentWord(Motor.normalize(event.target.value))}
-            />
-            <button type="submit" disabled={!puzzle}>
-                Gönder
-            </button>
-          </form>
+
+<form className="entry-form" onSubmit={handleSubmit}>
+
+<label className="sr-only" htmlFor="word-input">
+Enter next word
+</label>
+
+<input
+ref={inputRef}
+autoFocus
+id="word-input"
+name="word-input"
+type="text"
+placeholder="Kelime girin..."
+autoComplete="off"
+value={currentWord}
+onChange={(event)=>
+setCurrentWord(
+Motor.normalize(event.target.value)
+)}
+/>
+
+<button
+type="submit"
+disabled={!puzzle}
+>
+
+Gönder
+
+</button>
+
+</form>
+
 ) : (
 
 motor && (
 
-<button
-className="new-game-btn"
-onClick={() => createNewPuzzle(motor)}
->
+<VictoryScreen
 
-Yeni Oyun
+wordsUsed={enteredWords.length}
 
-</button>
+elapsedSeconds={elapsedSeconds}
+
+onNewGame={() => createNewPuzzle(motor)}
+
+/>
 
 )
 
 )}
 
         
+{!gameOver && (
 
-       <MessageBox
-    success={successMessage}
-    errors={validationMessages}
+<MessageBox
+
+success={successMessage}
+
+errors={validationMessages}
+
 />
+
+)}
       </section>
     </main>
   );
 }
+
