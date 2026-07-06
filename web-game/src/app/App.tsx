@@ -24,6 +24,7 @@ export default function App() {
   const [gameOver, setGameOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [showHelp, setShowHelp] = useState(true);
+  const [shakeInput, setShakeInput] = useState(false);
   const TURN_TIME = 7;
 const [timeLeft, setTimeLeft] = useState(TURN_TIME);
   function createNewPuzzle(gameMotor: Motor) {
@@ -119,12 +120,19 @@ useEffect(() => {
     }
 
     if (nextMessages.length > 0) {
-      setValidationMessages(nextMessages);
-      setSuccessMessage('');
-      setCurrentWord('');
-      
-      return;
-    }
+
+    setShakeInput(true);
+
+    setTimeout(() => {
+        setShakeInput(false);
+    }, 450);
+
+    setValidationMessages(nextMessages);
+    setSuccessMessage('');
+    setCurrentWord('');
+
+    return;
+}
     inputRef.current?.focus();
     const updatedWords = [...enteredWords, nextWord];
     setEnteredWords(updatedWords);
@@ -180,6 +188,7 @@ target={displayWord(puzzle.target)}
             </label>
             <input
               ref={inputRef}
+              className={shakeInput ? "shake" : ""}
               autoFocus
               id="word-input"
               name="word-input"
