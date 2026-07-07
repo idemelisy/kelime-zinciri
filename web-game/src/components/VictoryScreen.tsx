@@ -45,9 +45,9 @@ export default function VictoryScreen({
         }}
       >
 
-        <div className="victory-emoji">
+        {/* <div className="victory-emoji">
           🏆
-        </div>
+        </div> */}
 
         <h2>
           Tebrikler!
@@ -58,16 +58,15 @@ export default function VictoryScreen({
         </p>
 
         <div className="victory-stats">
+             <h2>
+           <span>{wordsUsed-1}</span>
+            <small> Kelime</small>
+        </h2>
+          
 
-          <div className="stat-box">
-            <span>{wordsUsed}</span>
-            <small>Kelime</small>
-          </div>
-
-          <div className="stat-box">
-            <span>{elapsedSeconds}s</span>
-            <small>Süre</small>
-          </div>
+            <h2>
+            <span>{elapsedSeconds} s</span>
+         </h2>
 
         </div>
 

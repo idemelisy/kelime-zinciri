@@ -1,21 +1,24 @@
 export class Motor {
   private readonly wordsByLetter: Record<string, string[]>;
   private readonly wordSet: Set<string>;
-  private readonly allWordsList: string[];
+  private readonly wideWordsList: string[]; // Geniş liste
+  private readonly narrowWordsList: string[]; // Dar liste (Yeni eklendi)
 
-  constructor(words: string[]) {
+  // Artık constructor hem geniş (wideWords) hem dar (narrowWords) listeyi alıyor
+  constructor(wideWords: string[], narrowWords: string[] = []) {
     this.wordsByLetter = {};
     this.wordSet = new Set();
-    this.allWordsList = [];
+    this.wideWordsList = [];
+    this.narrowWordsList = [...narrowWords]; // Dar kelimeleri klonlayıp saklıyoruz
 
-    for (const word of words) {
+    for (const word of wideWords) {
       const cleanWord = Motor.normalize(word);
       if (!cleanWord) {
         continue;
       }
 
       this.wordSet.add(cleanWord);
-      this.allWordsList.push(word.trim());
+      this.wideWordsList.push(word.trim());
       const firstLetter = cleanWord[0];
       const bucket = this.wordsByLetter[firstLetter] ?? [];
       bucket.push(word.trim());
@@ -24,15 +27,23 @@ export class Motor {
   }
 
   static normalize(word: string): string {
-    return word.trim().toLowerCase();
+    // Türkçe karakterleri güvenli şekilde küçültmek için yerel ayarlara uygun toLocaleLowerCase kullanmak daha iyidir
+    return word.trim().toLocaleLowerCase('tr-TR');
   }
 
   contains(word: string): boolean {
     return this.wordSet.has(Motor.normalize(word));
   }
 
+  // 🚀 ÖNEMLİ DEĞİŞİKLİK: puzzle.ts çağırınca sadece DAR kelimeleri dönecek
   allWords(): string[] {
-    return [...this.allWordsList];
+    // Eğer dar liste boşsa (fallback olarak) geniş listeyi döner, doluysa sadece dar listeyi döner
+    return this.narrowWordsList.length > 0 ? [...this.narrowWordsList] : [...this.wideWordsList];
+  }
+
+  // İhtiyaç halinde geniş kelimelerin hepsine erişmek istersen:
+  allWideWords(): string[] {
+    return [...this.wideWordsList];
   }
 
   neighbors(word: string): string[] {

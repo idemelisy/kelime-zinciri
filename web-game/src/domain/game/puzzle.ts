@@ -17,48 +17,45 @@ function randomNeighbor(motor: Motor, word: string, used: Set<string>): string |
 }
 
 export function generatePuzzle(motor: Motor): Puzzle {
-  const allWords = motor.allWords();
-
-  if (allWords.length === 0) {
-    throw new Error('Dictionary is empty');
-  }
+  // 1. Geniş liste yerine sadece DAR kelimeleri tutan metodu çağırıyoruz
+  // Not: Motor sınıfınızda bu metodun adı farklı olabilir (örn: getDarWords, darWords, allWords)
+  // motor.allWords() metodunun TypeScript'te de sadece dar kelimeleri döndüğünden emin olun.
+  const darWords = motor.allWords(); 
+  
+  // Hızlı arama için dar kelimeleri bir Set haline getirelim
+  const darWordsSet = new Set(darWords.map(w => Motor.normalize(w)));
 
   while (true) {
-    const start = allWords[Math.floor(Math.random() * allWords.length)];
+    // 🚀 BAŞLANGIÇ KELİMESİNİ DAR LİSTEDEN SEÇİYORUZ
+    const start = darWords[Math.floor(Math.random() * darWords.length)];
     const used = new Set([Motor.normalize(start)]);
 
-    const word1 = randomNeighbor(motor, start, used);
-    if (!word1) {
-      continue;
-    }
-    used.add(Motor.normalize(word1));
+    const w1 = randomNeighbor(motor, start, used);
+    if (!w1) continue;
+    used.add(Motor.normalize(w1));
 
-    const word2 = randomNeighbor(motor, word1, used);
-    if (!word2) {
-      continue;
-    }
-    used.add(Motor.normalize(word2));
+    const w2 = randomNeighbor(motor, w1, used);
+    if (!w2) continue;
+    used.add(Motor.normalize(w2));
 
-    const word3 = randomNeighbor(motor, word2, used);
-    if (!word3) {
-      continue;
-    }
-    used.add(Motor.normalize(word3));
+    const w3 = randomNeighbor(motor, w2, used);
+    if (!w3) continue;
+    used.add(Motor.normalize(w3));
 
-    const targetCandidates = motor
-      .neighbors(word3)
-      .filter((candidate) => !used.has(Motor.normalize(candidate)));
+    // 🚀 HEDEF KELİME ADAYLARINI SADECE DAR LİSTEDEN SEÇİYORUZ
+    const neighborsOfW3 = motor.neighbors(w3);
+    const targetCandidates = neighborsOfW3.filter(w => 
+      !used.has(Motor.normalize(w)) && darWordsSet.has(Motor.normalize(w))
+    );
 
-    if (targetCandidates.length === 0) {
-      continue;
-    }
+    if (targetCandidates.length === 0) continue;
 
     const target = targetCandidates[Math.floor(Math.random() * targetCandidates.length)];
 
     return {
-      start,
-      target,
-      solution: [start, word1, word2, word3, target],
+      start: start,
+      target: target,
+      solution: [start, w1, w2, w3, target]
     };
   }
 }
