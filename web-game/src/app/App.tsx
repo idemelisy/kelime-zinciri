@@ -263,6 +263,8 @@ export default function App() {
               name="word-input"
               type="text"
               autoComplete="off"
+              inputMode="none" 
+              readOnly={false}
               onChange={(event) => {
     // 1. Girdiyi al ve Türkçe karakter kuralına göre büyüt
     let upperValue = event.target.value.toLocaleUpperCase('tr-TR');

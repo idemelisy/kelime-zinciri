@@ -674,3 +674,50 @@ button, input {
     user-select: none;
     animation: popIn 0.1s ease-out;
 }
+/* 📱 MOBİL CİHAZLAR İÇİN EKRAN AYARLARI (Maksimum 480px genişlik) */
+@media (max-width: 480px) {
+    .game-shell {
+        padding: 8px;
+        min-height: 100vh;
+        height: 100vh;
+        overflow: hidden; /* Sayfanın aşağı yukarı gereksiz kaymasını önler */
+    }
+
+    .game-container {
+        width: 100%;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between; /* Elemanları ekrana dengeli dağıtır */
+        height: 100%;
+    }
+
+    /* Kelime kutularının (Tile) mobilde küçülerek ekrana sığmasını sağlar */
+    .wordle-row {
+        gap: 4px !important;
+    }
+
+    .tile {
+        width: 45px !important; /* PC'de büyük olan kutuları mobilde küçültüyoruz */
+        height: 45px !important;
+        font-size: 1.4rem !important;
+    }
+
+    /* Geçmiş kelimelerin listelendiği paneli mobilde daraltalım */
+    .chain-panel {
+        max-height: 40vh; /* Ekranın çok büyük kısmını kaplamasın */
+        overflow-y: auto;
+    }
+
+    /* Ekran klavyesindeki tuşları mobilde parmakla basılabilecek ama taşmayacak boyuta getir */
+    .keyboard-row {
+        gap: 3px !important;
+        margin-bottom: 4px !important;
+    }
+
+    .keyboard-key {
+        height: 45px !important;
+        font-size: 0.9rem !important;
+        padding: 0 4px !important;
+    }
+}
