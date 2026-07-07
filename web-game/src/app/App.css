@@ -48,7 +48,37 @@ button, input {
     gap: 20px;
     background: radial-gradient(circle at top, rgba(127, 176, 105, 0.06) 0%, transparent 40%), var(--bg);
 }
+/* 🖥️ PC ve TÜM CİHAZLARDA GEÇERLİ EN DIŞ OVERLAY AYARI */
+.game-over-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(0, 0, 0, 0.55) !important; /* Arkayı loşlaştıran tül efekti */
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    
+    /* 🚨 İŞTE PC'DE DE KLAVYENİN ÜSTÜNE ÇIKMASINI SAĞLAYAN SİHİRLİ SATIR: */
+    z-index: 999999 !important; 
+    
+    padding: 16px;
+    box-sizing: border-box;
+}
 
+.game-over-card {
+    background: #ffffff !important;
+    color: #2a2a2a !important;
+    border-radius: 20px !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+    width: min(90%, 340px) !important;
+    padding: 32px 24px !important;
+    box-sizing: border-box;
+    text-align: center;
+}
 .game-card {
     width: min(100%, 500px);      
     display: flex;
@@ -676,53 +706,144 @@ button, input {
 }
 /* 📱 %100 MOBİL UYUMLU VE KAYMAYI ENGELLEYEN AYARLAR */
 @media (max-width: 480px) {
-    /* 1. Ekranın aşağı yukarı kaymasını kökten engelliyoruz */
+    /* 1. ⚪ MOBİLDE DE ARKA PLANI PC GİBİ BEYAZ VE FERAH TUTAN AYAR */
     html, body, .game-shell {
         overflow: hidden !important;
         position: fixed;
         width: 100%;
         height: 100vh;
-        height: -webkit-fill-available; /* iOS Safari alt bar hatasını önler */
         margin: 0;
         padding: 0;
+        background-color: #ffffff !important; /* Koyu gri yerine temiz beyaz yapıldı */
+        color: var(--text) !important;
     }
 
+    .keyboard-container {
+        width: 100% !important;
+        max-width: 100vw !important;
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        background-color: #f4f4f5 !important; /* Klavyenin altındaki şık açık gri panel */
+    }
+
+    /* Her bir satır ekran genişliğine tam sığmak zorunda */
+    .keyboard-row {
+        display: flex !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        gap: 3px !important; /* Tuşlar arası boşluğu daraltıyoruz */
+        margin-bottom: 4px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* HARFLERİN TAŞMASINI ENGELLEYEN EN ÖNEMLİ AYAR */
+    .keyboard-key {
+        flex: 1 !important; /* Her harf ekranı eşit paylaşır */
+        min-width: 0 !important; /* CSS'in zorunlu genişlik vermesini engeller */
+        padding: 0 !important; /* İç boşluğu sıfırlayarak harfleri küçültür */
+        height: 38px !important; /* Dikeyde çok yer kaplamasın */
+        font-size: 0.8rem !important; /* Harf boyutunu ufaltır */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* SİL ve GÖNDER tuşları çok büyükse onları biraz dizginleyelim */
+    .keyboard-key.wide-key {
+        flex: 1.4 !important;
+        font-size: 0.7rem !important;
+    }
+
+    /* 2. Ana konteyner düzeni */
     .game-shell {
-        padding: 8px 12px;
-        box-sizing: border-box;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #ffffff !important;
     }
 
-    /* 2. Tüm elementleri ekran yüksekliğine göre esnetiyoruz */
+    /* 3. Kart yapısını dikeyde esnek bölmelere ayırıyoruz */
     .game-container {
-        width: 100%;
-        max-width: 100%;
-        height: 100%;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        padding: 12px 8px !important;
+        box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        justify-content: space-between; /* Elemanları yukarıdan aşağıya dengeli dağıtır */
+        justify-content: space-between; /* Elemanları alt, orta, üste yayar */
         align-items: center;
-        gap: 8px; /* Elemanlar arası sıkışmayı önleyen asgari boşluk */
+        gap: 0 !important;
+        background-color: #ffffff !important;
     }
 
-    /* 3. Başlık alanını mobilde küçültüyoruz */
+    /* --- ÜST BÖLGE (Header, Hedef, Sayaç, Geçmiş) --- */
     .header-component {
-        margin-bottom: 0 !important;
-        padding: 4px 0;
+        padding: 2px 0 !important;
+        margin: 0 !important;
     }
     .header-component h1 {
-        font-size: 1.5rem !important;
+        font-size: 1.4rem !important;
+    }
+    
+    .goal-bar { /* Hedef barı */
+        margin: 4px 0 !important;
+        padding: 6px !important;
+        background-color: #ffffff !important;
+        border: 1px solid #e4e4e7 !important;
     }
 
-    /* 4. Kelime geçmişi panelini dikeyde sınırlıyoruz */
+    .timer-wrapper {
+        width: 70px !important;
+        height: 70px !important;
+        margin: 4px auto !important;
+    }
+    .timer-svg {
+        width: 70px !important;
+        height: 70px !important;
+    }
+    .timer-svg circle {
+        r: 28 !important;
+        cx: 35 !important;
+        cy: 35 !important;
+    }
+    .timer-text {
+        font-size: 1.2rem !important;
+    }
+
+    /* Kelime zinciri paneli */
     .chain-panel {
-        flex: 1; /* Ekrandan kalan boşluğu esnek şekilde doldurur */
-        max-height: 25vh; /* Ekranın çeyreğinden fazlasını kaplayamaz */
-        width: 100%;
+        flex: 1;
+        max-height: 25vh !important; /* Dikeyde biraz daha rahat alan sağladık */
         overflow-y: auto;
-        padding: 4px;
+        width: 100%;
+        margin-bottom: 8px;
+        background: transparent !important; /* Arka planı şeffaf yaparak beyaz zeminle birleştirdik */
     }
 
-    /* 5. 🎯 TILE (KUTU) BOYUTLARINI EKRANA SIĞACAK ŞEKİLDE KÜÇÜLTÜYORUZ */
+    /* --- ORTA BÖLGE (Yazılan Kelimenin Kutuları) --- */
+    .entry-form {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: auto 0 !important; 
+        padding: 10px 0;
+    }
+
+    /* Ekrandaki o input görünmezliği */
+    .entry-form input {
+        position: absolute !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 1px !important;
+        height: 1px !important;
+    }
+
+    /* Aktif yazılan kelimenin harf kutuları */
     .wordle-row {
         gap: 4px !important;
         justify-content: center;
@@ -730,83 +851,67 @@ button, input {
     }
 
     .tile {
-        width: 38px !important; /* PC boyutunun neredeyse yarısı, ekrana tam sığar */
+        width: 36px !important; 
         height: 38px !important;
-        font-size: 1.2rem !important;
-        border-width: 1.5px !important;
+        font-size: 1.1rem !important;
+        border: 1.5px solid var(--text) !important;
         border-radius: 4px !important;
+        background-color: #ffffff !important;
     }
 
-    /* 6. Sayaç çemberini biraz kibarlaştırıyoruz */
-    .timer-wrapper {
-        width: 80px !important;
-        height: 80px !important;
-    }
-    .timer-svg {
-        width: 80px !important;
-        height: 80px !important;
-    }
-    /* Çember küçüldüğü için yarıçap ayarını CSS'ten de destekleyelim */
-    .timer-svg circle {
-        r: 32 !important;
-        cx: 40 !important;
-        cy: 40 !important;
-    }
-    .timer-text {
-        font-size: 1.3rem !important;
-    }
-
-    /* 7. ⌨️ KLAVYEYİ EKRANIN EN ALTINA SABİTLİYORUZ VE TUŞLARI UFALTIYORUZ */
+    /* --- ALT BÖLGE (Klavye) --- */
     .keyboard-container {
-        width: 100%;
-        margin-top: auto; /* Klavyeyi hep en alta iter */
-        padding-bottom: env(safe-area-inset-bottom); /* Çentikli telefonlar için boşluk */
+        width: 100% !important;
+        padding-bottom: env(safe-area-inset-bottom, 8px) !important;
+        margin-top: auto !important;
     }
 
     .keyboard-row {
-        gap: 3px !important;
-        margin-bottom: 4px !important;
+        gap: 2px !important; 
+        margin-bottom: 5px !important;
+        width: 100% !important;
         justify-content: center;
     }
 
     .keyboard-key {
-        height: 40px !important; /* Parmakla basılabilecek minimum ideal yükseklik */
-        font-size: 0.85rem !important;
-        padding: 0 2px !important;
+        height: 42px !important; 
+        font-size: 0.8rem !important;
+        padding: 0 !important;
         border-radius: 4px !important;
-        flex: 1; /* Tuşların ekrana yatayda tam yayılmasını sağlar */
+        flex: 1 !important; 
+        min-width: 0 !important; 
     }
 
-    /* ENTER ve DELETE tuşları biraz daha geniş kalabilir ama taşmayacak şekilde */
-    .keyboard-key.wide-key {
-        flex: 1.5 !important;
-        font-size: 0.75rem !important;
-    }
+    /* 🎯 4. OYUN BİTTİĞİNDE BEYAZ EKRANI HARİKA ŞEKİLDE LOŞLAŞTIRAN OVERLAY LAYER */
+   /* 🖥️ PC ve TÜM CİHAZLARDA GEÇERLİ EN DIŞ OVERLAY AYARI */
+.game-over-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(0, 0, 0, 0.55) !important; /* Arkayı loşlaştıran tül efekti */
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    
+    /* 🚨 İŞTE PC'DE DE KLAVYENİN ÜSTÜNE ÇIKMASINI SAĞLAYAN SİHİRLİ SATIR: */
+    z-index: 999999 !important; 
+    
+    padding: 16px;
+    box-sizing: border-box;
+}
 
-    /* 8. ⏱️ SÜRE DOLDU EKRANINI TAM ORTAYA KİLİTLİYORUZ */
-    .timeout-screen {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        flex: 1;
-        width: 100%;
-        padding: 16px;
-    }
-
-    .timeout-screen h2 {
-        font-size: 1.6rem !important;
-        margin-bottom: 8px;
-    }
-
-    .timeout-screen p {
-        font-size: 1rem !important;
-        margin-bottom: 16px;
-    }
-
-    .new-game-btn {
-        padding: 10px 24px !important;
-        font-size: 1rem !important;
-    }
+.game-over-card {
+    background: #ffffff !important;
+    color: #2a2a2a !important;
+    border-radius: 20px !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+    width: min(90%, 340px) !important;
+    padding: 32px 24px !important;
+    box-sizing: border-box;
+    text-align: center;
+}
 }

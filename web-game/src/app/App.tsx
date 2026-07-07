@@ -251,35 +251,27 @@ export default function App() {
           </div>
         )}
 
-        {!gameOver ? (
-          <form className="entry-form" onSubmit={handleSubmit}>
-            <label className="sr-only" htmlFor="word-input">
-             
-            </label>
-            <input
-              ref={inputRef}
-              autoFocus
-              id="word-input"
-              name="word-input"
-              type="text"
-              autoComplete="off"
-              inputMode="none" 
-              readOnly={false}
-              onChange={(event) => {
-    // 1. Girdiyi al ve Türkçe karakter kuralına göre büyüt
-    let upperValue = event.target.value.toLocaleUpperCase('tr-TR');
     
-    // 2. 🚨 GİZEMLİ NOKTAYI YOK EDEN EN KRİTİK HAMLE (Unicode Normalizasyonu):
-    // Unicode birleşik karakterleri (NFD) tekil karakter formuna (NFC) dönüştürür,
-    // böylece "i" harfinden türeyen o ayrık hayalet noktaları tamamen siler.
-    upperValue = upperValue.normalize('NFC');
+          {/* 1. Form alanı oyun bitse de yerleşimi korumak için hep buradadır */}
+        <form className="entry-form" onSubmit={handleSubmit}>
+          <input
+            ref={inputRef}
+            autoFocus
+            id="word-input"
+            name="word-input"
+            type="text"
+            autoComplete="off"
+            inputMode="none" 
+            readOnly={false}
+            onChange={(event) => {
+              let upperValue = event.target.value.toLocaleUpperCase('tr-TR');
+              upperValue = upperValue.normalize('NFC');
+              setCurrentWord(upperValue);
+            }}
+          />
 
-    // 3. State'e temizlenmiş kelimeyi gönder
-    setCurrentWord(upperValue);
-  }}
-            />
-
-            {/* Dinamik Wordle Harf Kutucukları */}
+          {/* Dinamik Harf Kutucukları: Sadece oyun devam ederken harfleri gösterir */}
+          {!gameOver && (
             <div className="wordle-row">
               {currentWord.length === 0 && (
                 <div className="tile active-cursor"></div>
@@ -294,32 +286,16 @@ export default function App() {
                 </div>
               ))}
             </div>
-          </form>
-        ) : (
-          motor && (
-            isTimeOut ? (
-              <div className="timeout-screen">
-                <h2>⏱️ Süre Doldu!</h2>
-                <p>Zamanında kelime üretemediğin için oyun bitti.</p>
-                <button className="new-game-btn" onClick={() => createNewPuzzle(motor)}>
-                  Yeniden Dene
-                </button>
-              </div>
-            ) : (
-              <VictoryScreen
-                wordsUsed={enteredWords.length}
-                elapsedSeconds={elapsedSeconds}
-                onNewGame={() => createNewPuzzle(motor)}
-              />
-            )
-          )
-        )}
+          )}
+        </form>
 
+        {/* 2. Hata/Doğrulama Mesajları */}
         {!gameOver && (
           <MessageBox success={successMessage} errors={validationMessages} />
         )}
 
-        {!gameOver && puzzle && (
+        {/* 3. Klavye: Oyun bitse de ekran alt barı kaymasın diye hep en altta durur */}
+        {puzzle && (
           <Keyboard 
             onKeyClick={handleKeyClick}
             onDelete={handleDelete}
@@ -329,6 +305,30 @@ export default function App() {
             }}
           />
         )}
+
+        {/* 4. 🎯 YENİ ŞEFFAF OVERLAY POP-UP KATMANI */}
+        {gameOver && motor && (
+          <div className="game-over-overlay">
+            <div className="game-over-card animate-popup">
+              {isTimeOut ? (
+                <div className="timeout-screen">
+                  <h2>⏱️ Süre Doldu!</h2>
+                  <p>Zamanında kelime üretemediğin için oyun bitti.</p>
+                  <button className="new-game-btn" onClick={() => createNewPuzzle(motor)}>
+                    Yeniden Dene
+                  </button>
+                </div>
+              ) : (
+                <VictoryScreen
+                  wordsUsed={enteredWords.length}
+                  elapsedSeconds={elapsedSeconds}
+                  onNewGame={() => createNewPuzzle(motor)}
+                />
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
     </main>
   );
