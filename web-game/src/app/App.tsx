@@ -242,7 +242,7 @@ export default function App() {
         {!gameOver ? (
           <form className="entry-form" onSubmit={handleSubmit}>
             <label className="sr-only" htmlFor="word-input">
-              
+                
             </label>
             <input
               ref={inputRef}
