@@ -264,8 +264,17 @@ export default function App() {
               type="text"
               autoComplete="off"
               onChange={(event) => {
-                setCurrentWord(event.target.value.toLocaleUpperCase('tr-TR'));
-              }}
+    // 1. Girdiyi al ve Türkçe karakter kuralına göre büyüt
+    let upperValue = event.target.value.toLocaleUpperCase('tr-TR');
+    
+    // 2. 🚨 GİZEMLİ NOKTAYI YOK EDEN EN KRİTİK HAMLE (Unicode Normalizasyonu):
+    // Unicode birleşik karakterleri (NFD) tekil karakter formuna (NFC) dönüştürür,
+    // böylece "i" harfinden türeyen o ayrık hayalet noktaları tamamen siler.
+    upperValue = upperValue.normalize('NFC');
+
+    // 3. State'e temizlenmiş kelimeyi gönder
+    setCurrentWord(upperValue);
+  }}
             />
 
             {/* Dinamik Wordle Harf Kutucukları */}
