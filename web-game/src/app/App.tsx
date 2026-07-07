@@ -51,10 +51,17 @@ export default function App() {
     setValidationMessages([]);
     setSuccessMessage("");
     setGameOver(false);
+    setIsTimeOut(false);
     setStartTime(Date.now());
     setElapsedSeconds(0);
     setTimeLeft(TURN_TIME);
     console.debug(nextPuzzle.solution);
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.value = ""; // İçini temizle
+        inputRef.current.focus();    // Odağı zorla buraya getir
+      }
+    }, 100);
   }
 
   useEffect(() => {
@@ -74,6 +81,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // Eğer oyun bittiyse veya puzzle yoksa sayaç kurma
     if (gameOver || !puzzle) return;
 
     const timer = setInterval(() => {
@@ -90,8 +98,12 @@ export default function App() {
       });
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [gameOver, puzzle, timeLeft]);
+    // Kullanıcı kelime gönderdiğinde veya YENİDEN DENE dediğinde 
+    // bu return fonksiyonu eski sayacı hafızadan KESİN OLARAK siler.
+    return () => {
+      clearInterval(timer);
+    };
+  }, [gameOver, puzzle, enteredWords]); // enteredWords eklendi, böylece her kelimede eski sayaç sıfırlanıp temiz 7 saniye başlar.
 
   const handleKeyClick = (key: string) => {
     if (gameOver) return;
@@ -242,7 +254,7 @@ export default function App() {
         {!gameOver ? (
           <form className="entry-form" onSubmit={handleSubmit}>
             <label className="sr-only" htmlFor="word-input">
-                
+             
             </label>
             <input
               ref={inputRef}
