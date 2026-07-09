@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 type LandingPageProps = {
     onStart: () => void;
 };
@@ -25,7 +27,20 @@ export default function LandingPage({
             </div>
         );
     };
+// 🚀 Açılış ekranında Space veya Enter tuşlarına basıldığında oyunu başlatır
+useEffect(() => {
+  const handleLandingKeyDown = (event: KeyboardEvent) => {
+    if (event.key === ' ' || event.key === 'Enter') {
+      event.preventDefault(); // Sayfa kaymasını veya form tetiklenmelerini engeller
+      onStart(); // Props olarak gelen başlama fonksiyonunu tetikler
+    }
+  };
 
+  window.addEventListener('keydown', handleLandingKeyDown);
+  return () => {
+    window.removeEventListener('keydown', handleLandingKeyDown);
+  };
+}, [onStart]);
     return (
         <div className="landing">
             <h1>Kelime Zinciri</h1>
