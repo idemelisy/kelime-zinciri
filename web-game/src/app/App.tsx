@@ -1215,7 +1215,13 @@ function getDailyRule(seed: number): WheelOption {
 }
 
 function displayWord(word: string): string {
-  return word.toLocaleUpperCase('tr-TR').normalize('NFC');
+  // Önce Türkçe kurallarına göre büyütüyoruz
+  const upper = word.toLocaleUpperCase('tr-TR');
+  
+  // Fontların hatalı render ettiği kombine noktaları temiz standart 'İ' haline getiriyoruz
+  return upper
+    .replace(/\u0130/g, 'İ') // Tam İ karakteri garanti altına alınır
+    .replace(/I\u0307/g, 'İ'); // Ayrışmış noktalar temizlenir
 }
 
 export default function App() {
@@ -1744,10 +1750,11 @@ useEffect(() => {
             inputMode="none" 
             readOnly={false}
             onChange={(event) => {
-              let upperValue = event.target.value.toLocaleUpperCase('tr-TR');
-              upperValue = upperValue.normalize('NFC');
-              setCurrentWord(upperValue);
-            }}
+  let upperValue = event.target.value.toLocaleUpperCase('tr-TR');
+  // .normalize('NFC') kısmını kaldırıp yerine bunu koyuyoruz:
+  upperValue = upperValue.replace(/I\u0307/g, 'İ'); 
+  setCurrentWord(upperValue);
+}}
           />
 
           {!gameOver && (
@@ -1823,7 +1830,7 @@ useEffect(() => {
                     <h2>⏱️ Süre Doldu!</h2>
                     <p>Zamanında kelime üretemediğin için oyun bitti.</p>
                     <button className="new-game-btn" onClick={() => createNewPuzzle(motor)}>
-                      Yeniden Dene (Space/Enter)
+                      Yeniden Dene 
                     </button>
                   </div>
                 ) : (
