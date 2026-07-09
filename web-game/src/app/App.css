@@ -928,3 +928,285 @@ button, input {
     text-align: center;
 }
 }
+/* ==========================================
+   🎯 MOD SEÇİM & ÇARK EKRANI STİLLERİ (YENİ)
+   ========================================== */
+
+/* Mod Seçim ve Çark Konteyner Ayarları */
+.mode-selection-container, .wheel-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 450px);
+    margin: auto;
+    padding: 20px;
+    gap: 30px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* Mod Seçim Butonları Wrapper */
+.mode-buttons-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+/* Genel Mod Buton Stili */
+.mode-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    padding: 20px;
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    background: #ffffff;
+    color: var(--text);
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    box-shadow: var(--shadow);
+}
+
+.mode-btn span {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+/* Normal Mod Özel Hover */
+.mode-btn.normal:hover {
+    border-color: var(--primary);
+    background: rgba(127, 176, 105, 0.05);
+    transform: scale(1.02);
+}
+
+/* Zor Mod Özel Hover */
+.mode-btn.hard:hover {
+    border-color: var(--danger);
+    background: rgba(202, 60, 37, 0.05);
+    transform: scale(1.02);
+}
+
+/* 🎰 ÇARK GÖSTERGE ALANI (WHEEL DISPLAY) */
+.wheel-display {
+    width: 100%;
+    min-height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px dashed var(--border);
+    border-radius: 20px;
+    background: #fdfdfd;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+}
+
+/* Çark Döndüğünde Tetiklenen Animasyon Sınıfı */
+.wheel-display.spinning {
+    border-color: var(--secondary);
+    background: rgba(27, 154, 170, 0.05);
+    animation: wheelShake 0.15s infinite linear;
+}
+
+/* Çark Seçim Kartı */
+.wheel-result-card {
+    text-align: center;
+    animation: popIn 0.2s ease-out;
+}
+
+.wheel-result-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--danger);
+}
+
+.wheel-result-card p {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* Çark Placeholder (Dönmeden Önceki Hali) */
+.wheel-placeholder {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 1px;
+}
+
+/* 🚀🎰 ÇARKI ÇEVİR BUTONU */
+.spin-btn {
+    width: 100%;
+    height: 54px;
+    border: none;
+    border-radius: 12px;
+    background: var(--secondary);
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(27, 154, 170, 0.25);
+    transition: all 0.2s ease;
+}
+
+.spin-btn:hover:not(:disabled) {
+    background: var(--secondary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(27, 154, 170, 0.35);
+}
+
+.spin-btn:disabled {
+    background: var(--border);
+    color: var(--muted);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Menüye Geri Dön Butonları */
+.back-to-modes, .back-to-menu-btn {
+    margin-top: 10px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: color 0.15s ease;
+    text-decoration: underline;
+}
+
+.back-to-modes:hover, .back-to-menu-btn:hover {
+    color: var(--text);
+}
+
+.back-to-menu-btn {
+    margin-top: 20px;
+    display: inline-block;
+}
+
+/* ==========================================
+   ⏳ ANIMASYON TANIMLAMALARI
+   ========================================== */
+
+/* Giriş Ekranları Yumuşak Geçişi */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Çark Dönüyormuş Gibi Sallantı Efekti */
+@keyframes wheelShake {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(1px, -1px) rotate(0.5deg); }
+    50% { transform: translate(-1px, 1px) rotate(-0.5deg); }
+    75% { transform: translate(1px, 1px) rotate(0deg); }
+    100% { transform: translate(-1px, -1px) rotate(0deg); }
+}
+
+
+/* ==========================================
+   📱 MOBİL EK DÜZENLEMELER (RESPONSIVE)
+   ========================================== */
+@media (max-width: 480px) {
+    .mode-selection-container, .wheel-container {
+        width: 100% !important;
+        padding: 10px !important;
+        gap: 20px !important;
+    }
+    
+    .mode-btn {
+        padding: 16px !important;
+        font-size: 1.15rem !important;
+    }
+    
+    .mode-btn span {
+        font-size: 0.85rem !important;
+    }
+
+    .wheel-display {
+        min-height: 120px !important;
+        padding: 15px !important;
+    }
+
+    .wheel-result-card h3 {
+        font-size: 1.2rem !important;
+    }
+}
+/* Seçilen kural kartının açıklaması */
+.rule-description {
+    margin-top: 12px !important;
+    font-size: 1.1rem !important;
+    color: var(--muted) !important;
+    background: #f4f4f5;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border-left: 4px solid var(--danger); /* Dikkat çekici sol çizgi */
+    display: inline-block;
+}
+
+/* Çark başarıyla durduğunda etrafında beliren yeşil onay çerçevesi */
+.wheel-display.rule-selected {
+    border-color: var(--primary) !important;
+    background: rgba(127, 176, 105, 0.04);
+    box-shadow: 0 0 20px rgba(127, 176, 105, 0.15);
+}
+
+/* 🎮 KURALI ANLADIM, BAŞLA! BUTONU */
+.start-game-btn {
+    width: 100%;
+    height: 54px;
+    border: none;
+    border-radius: 12px;
+    background: var(--primary); /* Adaçayı yeşili ile güvenli başlama hissi */
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(127, 176, 105, 0.25);
+    transition: all 0.2s ease;
+}
+
+.start-game-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(127, 176, 105, 0.35);
+}
+
+/* Butonun hafifçe yukarı aşağı oynamasını sağlayan tatlı bir hazır olma animasyonu */
+.animate-bounce {
+    animation: buttonBounce 2s infinite;
+}
+
+@keyframes buttonBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+/* Tıklanabilir durumdaki çark kutusunun stili */
+.wheel-display.clickable-wheel {
+    cursor: pointer;
+    transition: transform 0.1s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Çarka dokunulabilir olduğunu belirten hover efekti */
+.wheel-display.clickable-wheel:hover {
+    border-color: var(--secondary);
+    background: rgba(27, 154, 170, 0.02);
+    box-shadow: 0 6px 20px rgba(29, 26, 5, 0.04);
+    transform: scale(1.01);
+}
+
+/* Tıklama anında hafifçe içeri çökme efekti */
+.wheel-display.clickable-wheel:active {
+    transform: scale(0.99);
+}
