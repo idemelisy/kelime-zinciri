@@ -59,7 +59,7 @@ export default function VictoryScreen({
 
         <div className="victory-stats">
              <h2>
-           <span>{wordsUsed-1}</span>
+           <span>{wordsUsed}</span>
             <small> Kelime</small>
         </h2>
           

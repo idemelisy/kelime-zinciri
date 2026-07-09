@@ -1210,3 +1210,7 @@ button, input {
 .wheel-display.clickable-wheel:active {
     transform: scale(0.99);
 }
+/* Alt yazının olduğu class veya Header altındaki ilgili element */
+.header-subtitle { 
+  white-space: pre-line;
+}

@@ -1252,64 +1252,101 @@ export default function App() {
   const [timeLeft, setTimeLeft] = useState(7); 
   const [isTimeOut, setIsTimeOut] = useState(false);
 
-  function createNewPuzzle(gameMotor: Motor, keepRule = false, forceMode?: 'NORMAL' | 'HARD' | 'DAILY') {
-    const activeMode = forceMode || gameMode;
-    let nextPuzzle;
+function createNewPuzzle(gameMotor: Motor, keepRule = false, forceMode?: 'NORMAL' | 'HARD' | 'DAILY') {
+  const activeMode = forceMode || gameMode;
+  let nextPuzzle;
 
+  // 🧩 1. ADIM: Bulmaca Üretim Fonksiyonu (Seed mantığını temiz tutmak için soyutladık)
+  const getPuzzleInstance = () => {
     if (activeMode === 'DAILY') {
       const seed = getDailySeed();
       const seededRng = createSeededRandom(seed);
       const originalRandom = Math.random;
       
       Math.random = seededRng; 
-      nextPuzzle = generatePuzzle(gameMotor);
+      const puzzle = generatePuzzle(gameMotor);
       Math.random = originalRandom; 
+      return puzzle;
     } else {
-      nextPuzzle = generatePuzzle(gameMotor);
+      return generatePuzzle(gameMotor);
     }
+  };
 
-    setPuzzle({
-        ...nextPuzzle,
-        start: Motor.normalize(nextPuzzle.start),
-        target: Motor.normalize(nextPuzzle.target),
-        solution: nextPuzzle.solution.map(Motor.normalize),
-    });
+  // İlk bulmacayı üretiyoruz
+  nextPuzzle = getPuzzleInstance();
 
-    setEnteredWords([
-        Motor.normalize(nextPuzzle.start),
-    ]);
+  // 🔍 2. ADIM: KISIR DÖNGÜ VE SESLİ AMBARGOSU KİLİTLENME KONTROLLERİ
+  const seed = activeMode === 'DAILY' ? getDailySeed() : null;
+  const currentOrDailyRuleType = activeMode === 'DAILY' ? getDailyRule(seed!).type : activeRule;
 
-    setCurrentWord("");
-    setValidationMessages([]);
-    setSuccessMessage("");
-    setGameOver(false);
-    setIsTimeOut(false);
-    setStartTime(Date.now());
-    setElapsedSeconds(0);
+  let attempts = 0; 
+  while (attempts < 15) {
+    const startLastChar = nextPuzzle.start[nextPuzzle.start.length - 1].toLocaleUpperCase('tr-TR');
+    const targetFirstChar = nextPuzzle.target[0].toLocaleUpperCase('tr-TR');
     
-    if (activeMode === 'DAILY') {
-      const seed = getDailySeed();
-      const dailyRule = getDailyRule(seed);
-      setActiveRule(dailyRule.type);
-      setWheelResult(dailyRule);
-      setIsRuleAccepted(true);
-      setTimeLeft(dailyRule.type === 'HALF_TIME' ? 6 : 12);
-    } else if (activeMode === 'HARD' && !keepRule) {
-      setActiveRule('NONE');
-      setWheelResult(null);
-      setIsRuleAccepted(false);
-    } else {
-      const dynamicDuration = activeMode === 'HARD' ? (activeRule === 'HALF_TIME' ? 6 : 12) : 7;
-      setTimeLeft(dynamicDuration);
+    // 1️⃣ Kısır Döngü Kilidi Kontrolü
+    const isNoCycleDeadlock = 
+      currentOrDailyRuleType === 'NO_CYCLE' && 
+      startLastChar === targetFirstChar;
+
+    // 2️⃣ Sesli Ambargosu Kilidi Kontrolü
+    // (Başlangıcın son harfi veya hedefin ilk harfi A/E ise oyun kilitlenir)
+    const isBanVowelsDeadlock = 
+      currentOrDailyRuleType === 'BAN_VOWELS' && 
+      (startLastChar === 'A' || startLastChar === 'E' || targetFirstChar === 'A' || targetFirstChar === 'E');
+
+    // Eğer herhangi bir kilitlenme (deadlock) yoksa döngüden güvenle çıkabiliriz
+    if (!isNoCycleDeadlock && !isBanVowelsDeadlock) {
+      break;
     }
 
-    setTimeout(() => {
-      if (inputRef.current && (activeMode === 'NORMAL' || activeMode === 'DAILY' || keepRule)) {
-        inputRef.current.value = "";
-        inputRef.current.focus();
-      }
-    }, 100);
+    // Kilitlenme varsa yeni bulmaca üret ve tekrar dene
+    nextPuzzle = getPuzzleInstance();
+    attempts++;
   }
+
+  // --- 3. ADIM: Mevcut State Güncellemelerin (Aynen Korundu) ---
+  setPuzzle({
+      ...nextPuzzle,
+      start: Motor.normalize(nextPuzzle.start),
+      target: Motor.normalize(nextPuzzle.target),
+      solution: nextPuzzle.solution.map(Motor.normalize),
+  });
+
+  setEnteredWords([
+      Motor.normalize(nextPuzzle.start),
+  ]);
+
+  setCurrentWord("");
+  setValidationMessages([]);
+  setSuccessMessage("");
+  setGameOver(false);
+  setIsTimeOut(false);
+  setStartTime(Date.now());
+  setElapsedSeconds(0);
+  
+  if (activeMode === 'DAILY') {
+    const dailyRule = getDailyRule(seed!);
+    setActiveRule(dailyRule.type);
+    setWheelResult(dailyRule);
+    setIsRuleAccepted(true);
+    setTimeLeft(dailyRule.type === 'HALF_TIME' ? 6 : 12);
+  } else if (activeMode === 'HARD' && !keepRule) {
+    setActiveRule('NONE');
+    setWheelResult(null);
+    setIsRuleAccepted(false);
+  } else {
+    const dynamicDuration = activeMode === 'HARD' ? (activeRule === 'HALF_TIME' ? 6 : 12) : 7;
+    setTimeLeft(dynamicDuration);
+  }
+
+  setTimeout(() => {
+    if (inputRef.current && (activeMode === 'NORMAL' || activeMode === 'DAILY' || keepRule)) {
+      inputRef.current.value = "";
+      inputRef.current.focus();
+    }
+  }, 100);
+}
 
   function handleSelectDaily(gameMotor: Motor) {
     const dateStr = getDailyDateStr();
@@ -1340,23 +1377,24 @@ export default function App() {
     if (!puzzle || !wheelResult) return;
     
     const dateStr = getDailyDateStr();
-    const ruleLabel = wheelResult.label;
+    const ruleLabel = wheelResult.label + " "+ wheelResult.description;
     
-    let emojiChain = enteredWords.map(() => '🟩').join(' ');
+    const playerWordsCount = Math.max(0, enteredWords.length - 2);
+  let emojiChain = Array(playerWordsCount).fill('🟩').join(' ');
     if (isTimeOut) {
       emojiChain += ' 🟥';
     }
 
     const progressText = isTimeOut 
-      ? `📈 İlerleme: Zinciri ${enteredWords.length - 1} kelime uzattım!` 
-      : `🏆 Durum: Başarıyla tamamladım! (${enteredWords.length} Kelime)`;
+    ? `📈 İlerleme: Zincire ${playerWordsCount} kelime ekleyebildim!` 
+    : `🏆 Durum: Başarıyla tamamladım! (${playerWordsCount} Kelime İle)`;
 
-    const shareText = `🔗 Kelime Zinciri - Günün Mücadelesi (${dateStr})\n` +
-                      `🚫 Kural:${ruleLabel}\n` +
-                      `⏱️ Süre: ${elapsedSeconds || currentMaxTime} saniye\n` +
-                      `🔤 ${progressText}\n` +
-                      `${emojiChain}\n\n` +
-                      `Sen de dene: https://kelimezinciri.com`;
+  const shareText = `🔗 Kelime Zinciri - Günün Mücadelesi (${dateStr})\n` +
+                    `🚫 Kural:${ruleLabel}\n` +
+                    `⏱️ Süre: ${elapsedSeconds || currentMaxTime} saniye\n` +
+                    `🔤 ${progressText}\n` +
+                    `${emojiChain}\n\n` +
+                    `Sen de dene: https://kelimezinciri.com`;
 
     navigator.clipboard.writeText(shareText)
       .then(() => alert('Sonuçlar başarıyla panoya kopyalandı! 🚀'))
@@ -1408,6 +1446,7 @@ useEffect(() => {
         
         const dynamicTime = activeRule === 'HALF_TIME' ? 6 : 12;
         setTimeLeft(dynamicTime);
+        setStartTime(Date.now());
         setIsRuleAccepted(true);
         
         setTimeout(() => {
@@ -1668,6 +1707,7 @@ useEffect(() => {
               onClick={() => {
                 const dynamicTime = activeRule === 'HALF_TIME' ? 6 : 12;
                 setTimeLeft(dynamicTime);
+                setStartTime(Date.now());
                 setIsRuleAccepted(true);
                 setTimeout(() => {
                   inputRef.current?.focus();
@@ -1691,13 +1731,17 @@ useEffect(() => {
     );
   }
 
-  return (
-    <main className="game-shell" onClick={handleWrapperClick}>
-      <div className={`game-container ${shakeInput ? 'shake' : ''}`}> 
+ return (
+  <main className="game-shell" onClick={handleWrapperClick}>
+    <div className={`game-container ${shakeInput ? 'shake' : ''}`}> 
+      
+      {/* 💡 Header bileşenini bu div ile sarmalayarak \n karakterinin çalışmasını sağlıyoruz */}
+      <div style={{ whiteSpace: 'pre-line' }}>
         <Header 
           title="Kelime Zinciri" 
-          subtitle={(gameMode === 'HARD' || gameMode === 'DAILY') && wheelResult ? `📢 Kural: ${wheelResult.label}` : ""}
+          subtitle={(gameMode === 'HARD' || gameMode === 'DAILY') && wheelResult ? `📢 Kural: ${wheelResult.label} \n ${wheelResult.description}` : ""}
         />
+      </div>
         
         {puzzle && !gameOver && (
           <GoalBar start={displayWord(puzzle.start)} target={displayWord(puzzle.target)}/>
@@ -1795,32 +1839,43 @@ useEffect(() => {
             <div className="game-over-card animate-popup">
               
               {/* Günlük Mod Bitiş Paneli */}
-              {gameMode === 'DAILY' ? (
-                <div className="daily-finish-card">
-                  {isTimeOut ? (
-                    <>
-                      <h2>⏱️ Süre Doldu!</h2>
-                      <p className="daily-subtitle" style={{ fontSize: '15px', color: 'var(--text-muted, #666)' }}>
-                        Bugün zinciri <strong>{enteredWords.length - 1}</strong> kelime ilerletebildin, tebrikler! Yarın daha fazlasını yapabilirsin! 💪
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <h2>🎉 Başardın!</h2>
-                      <p className="daily-subtitle" style={{ fontSize: '15px', color: 'var(--text-muted, #666)' }}>
-                        Harika! Günün mücadelesini başarıyla tamamlayarak hedef kelimeye ulaştın! 🏆
-                      </p>
-                    </>
-                  )}
+              {/* Günlük Mod Bitiş Paneli */}
+{gameMode === 'DAILY' ? (
+  <div className="daily-finish-card">
+    {isTimeOut ? (
+      <>
+        <h2>⏱️ Süre Doldu!</h2>
+        {/* 💡 Eğer oyuncu hiç kelime ekleyemediyse (0 kelime ise) özel teselli mesajı veriyoruz */}
+        {Math.max(0, enteredWords.length - 2) === 0 ? (
+          <p className="daily-subtitle" style={{ fontSize: '15px', color: 'var(--text-muted, #666)' }}>
+            Olsun! Bugün zinciri ilerletemedin ama hiç üzülme. Yarın yeni kelimelerle zinciri tamamlayabilirsin! 👊 
+          </p>
+        ) : (
+          <p className="daily-subtitle" style={{ fontSize: '15px', color: 'var(--text-muted, #666)' }}>
+            Bugün zinciri <strong>{Math.max(0, enteredWords.length - 2)}</strong> kelime ilerletebildin, tebrikler! Yarın daha fazlasını yapabilirsin! 💪
+          </p>
+        )}
+      </>
+    ) : (
+      <>
+        <h2>🎉 Başardın!</h2>
+        <p className="daily-subtitle" style={{ fontSize: '15px', color: 'var(--text-muted, #666)' }}>
+          Harika! Günün mücadelesini başarıyla tamamlayarak hedef kelimeye ulaştın! 🏆
+        </p>
+      </>
+    )}
+    
+    {/* İstatistik ve Paylaş Butonları Aşağıda Aynen Devam Edecek... */}
                   
-                  <div className="daily-stats-summary" style={{ margin: '20px 0', padding: '15px', background: 'rgba(0,0,0,0.05)', borderRadius: '8px', textAlign: 'left' }}>
-                    <p style={{ margin: '5px 0' }}>🔤 {isTimeOut ? "Yazabildiğin Kelime" : "Toplam Kelime"}: <strong>{isTimeOut ? enteredWords.length - 1 : enteredWords.length}</strong></p>
-                    <p style={{ margin: '5px 0' }}>⏱️ Harcanan Süre: <strong>{elapsedSeconds || currentMaxTime} saniye</strong></p>
-                    <p style={{ margin: '5px 0' }}>📢 Günün Engeli: <strong>{wheelResult?.label}</strong></p>
-                  </div>
+                 <div className="daily-stats-summary" style={{ margin: '20px 0', padding: '15px', background: 'rgba(0,0,0,0.05)', borderRadius: '8px', textAlign: 'left' }}>
+  {/* enteredWords.length yerine enteredWords.length - 2 yazıyoruz */}
+  <p style={{ margin: '5px 0' }}>🔤 Eklediğin Kelime Sayısı: <strong>{Math.max(0, enteredWords.length - 2)}</strong></p>
+  <p style={{ margin: '5px 0' }}>⏱️ Harcanan Süre: <strong>{elapsedSeconds || currentMaxTime} saniye</strong></p>
+  <p style={{ margin: '5px 0' }}>📢 Günün Engeli: <strong>{wheelResult?.label}</strong></p>
+</div>
 
                   <button className="share-btn-main" onClick={handleShare} style={{ width: '100%', padding: '12px', background: '#22c55e', color: 'white', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', border: 'none', fontSize: '16px', marginBottom: '10px' }}>
-                    📊 Sonucu Paylaş (Wordle Tarzı)
+                    📊 Sonucu Paylaş 
                   </button>
                 </div>
               ) : (
@@ -1835,8 +1890,11 @@ useEffect(() => {
                   </div>
                 ) : (
                   <VictoryScreen
-                    wordsUsed={enteredWords.length}
-                    elapsedSeconds={elapsedSeconds}
+                    wordsUsed={Math.max(0, enteredWords.length - 2)}
+                    elapsedSeconds={
+            elapsedSeconds > currentMaxTime 
+              ? Math.max(1, currentMaxTime - timeLeft) 
+              : elapsedSeconds}
                     onNewGame={() => createNewPuzzle(motor)}
                   />
                 )
