@@ -535,12 +535,12 @@ interface WheelOption {
 
 const WHEEL_OPTIONS: WheelOption[] = [
   // 💡 Kısır Döngü açıklaması netleştirildi
-  { type: 'NO_CYCLE', label: '🔄 Kısır Döngü Yasağı', description: 'Başlangıç kelimesinin son harfiyle biten kelime kullanamazsın!' },
-  { type: 'BAN_VOWELS', label: '🚫 Sesli Ambargosu', description: "İçinde 'A' veya 'E' geçen kelimeler yasak!" },
-  { type: 'BAN_CONSONANTS', label: '🚫 Sessiz Ambargosu', description: "İçinde 'K', 'L' veya 'M' geçen kelimeler yasak!" },
-  { type: 'MIN_LENGTH', label: '📏 Ağır Sıklet', description: 'En az 5 harfli kelimeler kullanmalısın!' },
+  { type: 'NO_CYCLE', label: ' Kısır Döngü Yasağı', description: 'Başlangıç kelimesinin son harfiyle biten kelime kullanamazsın!' },
+  { type: 'BAN_VOWELS', label: ' Sesli Ambargosu', description: "İçinde 'A' veya 'E' geçen kelimeler yasak!" },
+  { type: 'BAN_CONSONANTS', label: ' Sessiz Ambargosu', description: "İçinde 'K', 'L' veya 'M' geçen kelimeler yasak!" },
+  { type: 'MIN_LENGTH', label: ' Ağır Sıklet', description: 'En az 5 harfli kelimeler kullanmalısın!' },
   // 💡 Süre açıklaması 12 saniyeye göre güncellendi
-  { type: 'HALF_TIME', label: '⚡ Zaman Baskısı', description: 'Süre 12 saniyeden 6 saniyeye düşer! Elini çabuk tut!' },
+  { type: 'HALF_TIME', label: ' Zaman Baskısı', description: 'Süre 12 saniyeden 6 saniyeye düşer! Elini çabuk tut!' },
 ];
 
 function displayWord(word: string): string {
@@ -811,11 +811,11 @@ export default function App() {
               setTimeLeft(7); // Normal mod süresi 7 saniye
             }}>
               🟢 Normal Mod
-              <span>Klasik kurallarla sakin bir oyun.</span>
+              <span>Klasik kurallarla bir oyun.</span>
             </button>
             <button className="mode-btn hard" onClick={() => setGameMode('HARD')}>
               🔴 Zor Mod (Çarklı)
-              <span>Çarkı çevir, değişen çılgın kurallarla yarış!</span>
+              <span>Çarkı çevir, değişen kurallarla yarış!</span>
             </button>
           </div>
         </div>
@@ -843,7 +843,7 @@ export default function App() {
                 <p className="rule-description">{wheelResult.description}</p>
               </div>
             ) : (
-              <div className="wheel-placeholder"> Çarkı Döndürmek İçin Dokun!</div>
+              <div className="wheel-placeholder"> Dokunarak Çarkı Döndür!</div>
             )}
           </div>
 
