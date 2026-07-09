@@ -1256,13 +1256,21 @@ function createNewPuzzle(gameMotor: Motor, keepRule = false, forceMode?: 'NORMAL
   const activeMode = forceMode || gameMode;
   let nextPuzzle;
 
-  // 🧩 1. ADIM: Bulmaca Üretim Fonksiyonu (Seed mantığını temiz tutmak için soyutladık)
+  // 1. ADIM: Günlük kuralı ve seed bilgisini en başta kesin olarak alıyoruz
+  let currentOrDailyRuleType = activeRule;
+  let dailySeedValue: number | null = null;
+
+  if (activeMode === 'DAILY') {
+    dailySeedValue = getDailySeed(); // Günlük seed'i al
+    const dailyRule = getDailyRule(dailySeedValue); // Günlük kuralı al
+    currentOrDailyRuleType = dailyRule.type; // Kural tipini eşitle (BAN_VOWELS, NO_CYCLE vb.)
+  }
+
+  // Bulmaca üretme iç fonksiyonu
   const getPuzzleInstance = () => {
-    if (activeMode === 'DAILY') {
-      const seed = getDailySeed();
-      const seededRng = createSeededRandom(seed);
+    if (activeMode === 'DAILY' && dailySeedValue !== null) {
+      const seededRng = createSeededRandom(dailySeedValue);
       const originalRandom = Math.random;
-      
       Math.random = seededRng; 
       const puzzle = generatePuzzle(gameMotor);
       Math.random = originalRandom; 
@@ -1272,40 +1280,48 @@ function createNewPuzzle(gameMotor: Motor, keepRule = false, forceMode?: 'NORMAL
     }
   };
 
-  // İlk bulmacayı üretiyoruz
+  // İlk bulmacayı üret
   nextPuzzle = getPuzzleInstance();
 
-  // 🔍 2. ADIM: KISIR DÖNGÜ VE SESLİ AMBARGOSU KİLİTLENME KONTROLLERİ
-  const seed = activeMode === 'DAILY' ? getDailySeed() : null;
-  const currentOrDailyRuleType = activeMode === 'DAILY' ? getDailyRule(seed!).type : activeRule;
-
+  // 🔍 2. ADIM: Nokta Atışı Kilitlenme Kontrolü
   let attempts = 0; 
-  while (attempts < 15) {
-    const startLastChar = nextPuzzle.start[nextPuzzle.start.length - 1].toLocaleUpperCase('tr-TR');
-    const targetFirstChar = nextPuzzle.target[0].toLocaleUpperCase('tr-TR');
+  while (attempts < 50) { // Günlük modun seed'i kilitlenmeyi kırana kadar dönebilmesi için sınırı artırdık
+    const startWord = nextPuzzle.start.toLocaleUpperCase('tr-TR');
+    const targetWord = nextPuzzle.target.toLocaleUpperCase('tr-TR');
     
-    // 1️⃣ Kısır Döngü Kilidi Kontrolü
+    const startLastChar = startWord[startWord.length - 1];
+    const targetFirstChar = targetWord[0];
+    
+    // 1️⃣ Kısır Döngü Kilidi (Başlangıcın sonu, hedefin ilkiyle aynı olamaz)
     const isNoCycleDeadlock = 
       currentOrDailyRuleType === 'NO_CYCLE' && 
       startLastChar === targetFirstChar;
 
-    // 2️⃣ Sesli Ambargosu Kilidi Kontrolü
-    // (Başlangıcın son harfi veya hedefin ilk harfi A/E ise oyun kilitlenir)
+    // 2️⃣ Sesli Ambargosu Kilidi (Tam senin dediğin mantık 🎯)
+    // Başlangıcın son harfi A/E ise (kullanıcı ilk kelimeyi türetemez) OR hedefin ilk harfi A/E ise (kullanıcı hedefe bağlanamaz)
     const isBanVowelsDeadlock = 
       currentOrDailyRuleType === 'BAN_VOWELS' && 
       (startLastChar === 'A' || startLastChar === 'E' || targetFirstChar === 'A' || targetFirstChar === 'E');
+    const isBanConsDeadlock = 
+      currentOrDailyRuleType === 'BAN_CONSONANTS' && 
+      (startLastChar === 'K' || startLastChar === 'L' || startLastChar === 'M' || targetFirstChar === 'K' || targetFirstChar === 'L' || targetFirstChar === 'M');
 
-    // Eğer herhangi bir kilitlenme (deadlock) yoksa döngüden güvenle çıkabiliriz
-    if (!isNoCycleDeadlock && !isBanVowelsDeadlock) {
+    // Eğer hiçbir kilitlenme yoksa döngü kırılır ve bu kelimeler seçilir
+    if (!isNoCycleDeadlock && !isBanVowelsDeadlock && !isBanConsDeadlock) {
       break;
     }
 
-    // Kilitlenme varsa yeni bulmaca üret ve tekrar dene
+    // 💡 EĞER KİLİTLENME VARSA: 
+    // Günlük modda aynı kelimenin tekrar üretilmesini engellemek için seed'i hafifçe değiştiriyoruz (manipüle ediyoruz)
+    if (activeMode === 'DAILY' && dailySeedValue !== null) {
+      dailySeedValue = dailySeedValue + 1; // Seed'i 1 artırarak bir sonraki yasal kelime çiftine geçmesini sağlıyoruz!
+    }
+
     nextPuzzle = getPuzzleInstance();
     attempts++;
   }
 
-  // --- 3. ADIM: Mevcut State Güncellemelerin (Aynen Korundu) ---
+  // --- 3. ADIM: State Güncellemeleri ---
   setPuzzle({
       ...nextPuzzle,
       start: Motor.normalize(nextPuzzle.start),
@@ -1326,7 +1342,7 @@ function createNewPuzzle(gameMotor: Motor, keepRule = false, forceMode?: 'NORMAL
   setElapsedSeconds(0);
   
   if (activeMode === 'DAILY') {
-    const dailyRule = getDailyRule(seed!);
+    const dailyRule = getDailyRule(dailySeedValue!);
     setActiveRule(dailyRule.type);
     setWheelResult(dailyRule);
     setIsRuleAccepted(true);
@@ -1416,11 +1432,67 @@ function createNewPuzzle(gameMotor: Motor, keepRule = false, forceMode?: 'NORMAL
       if (count > 15) {
         clearInterval(interval);
         setIsSpinning(false);
-        setActiveRule(randomOption.type);
+        const finalRule = randomOption.type;
+        setActiveRule(finalRule);
+      if (motor && puzzle) {
+            let safePuzzle = puzzle;
+            let attempts = 0;
+            const ruleSanitized = finalRule.toLowerCase();
+
+            while (attempts < 50) {
+              const startWordLower = safePuzzle.start.toLowerCase();
+              const targetWordLower = safePuzzle.target.toLowerCase();
+
+              const isNoCycleDeadlock = ruleSanitized === 'no_cycle' && startWordLower.endsWith(targetWordLower.charAt(0));
+              const isBanVowelsDeadlock = ruleSanitized === 'ban_vowels' && (startWordLower.endsWith('a') || startWordLower.endsWith('e') || targetWordLower.startsWith('a') || targetWordLower.startsWith('e'));
+const isBanConsonantsDeadlock = 
+  ruleSanitized === 'ban_consonants' && 
+  (startWordLower.endsWith('k') || startWordLower.endsWith('l') || startWordLower.endsWith('m') || 
+   targetWordLower.startsWith('k') || targetWordLower.startsWith('l') || targetWordLower.startsWith('m'));
+
+// 🛑 Eğer hiçbir kilitlenme yoksa güvenli kelimeler bulunmuştur, döngüden çık
+if (!isNoCycleDeadlock && !isBanVowelsDeadlock && !isBanConsonantsDeadlock) {
+  break; 
+}
+
+              // Kilitlenme varsa kilitlenmeyen kelimeyi bulana kadar motoru çalıştır
+              safePuzzle = generatePuzzle(motor);
+              attempts++;
+            }
+
+            // Eğer baştaki kelimeler kilitli çıktığı için yeni kelime seçildiyse state'leri güncelle
+            if (safePuzzle.start !== puzzle.start) {
+              setPuzzle({
+                ...safePuzzle,
+                start: Motor.normalize(safePuzzle.start),
+                target: Motor.normalize(safePuzzle.target),
+                solution: safePuzzle.solution.map(Motor.normalize),
+              });
+              setEnteredWords([Motor.normalize(safePuzzle.start)]);
+            }
+        }
       }
     }, 100);
   }
+// ⌨️ Çarkı Döndürmek İçin Klavye Kısayolu (Space veya Enter)
+  useEffect(() => {
+    const handleWheelSpinShortcut = (event: KeyboardEvent) => {
+      // Eğer Zor moddaysak, henüz bir kural çıkmadıysa ve çark şu an DÖNMÜYORSA
+      if (gameMode === 'HARD' && !wheelResult && !isSpinning) {
+        if (event.key === ' ' || event.key === 'Enter') {
+          event.preventDefault(); // Boşluk (Space) tuşunun sayfayı aşağı kaydırmasını engeller
+          spinTheWheel();
+        }
+      }
+    };
 
+    window.addEventListener('keydown', handleWheelSpinShortcut);
+    
+    // Temizlik (Cleanup) fonksiyonu
+    return () => {
+      window.removeEventListener('keydown', handleWheelSpinShortcut);
+    };
+  }, [gameMode, wheelResult, isSpinning]); // Bağımlılıklar güncellendikçe listener yenilenir
   useEffect(() => {
     let active = true;
 
